@@ -171,7 +171,7 @@
       display: grid;
       grid-template-columns: 190px 1fr 190px;
       gap: 16px;
-      padding: 24px 52px 34px;
+      padding: 24px 52px 132px;
     }
     .team, .slots {
       display: flex;
@@ -223,10 +223,15 @@
       font-size: 46px;
       font-weight: 900;
     }
-    .slot.available {
+    .slot.available, .slot.drop-hover {
       background: rgba(90,90,64,.18);
       border-color: rgba(58,58,32,.32);
       animation: pulseSlot 1.1s ease-in-out infinite;
+    }
+    .slot.drop-hover {
+      background: rgba(234,179,8,.22);
+      border-color: rgba(234,179,8,.72);
+      box-shadow: inset 0 8px 18px rgba(234,179,8,.12), 0 0 0 10px rgba(234,179,8,.1);
     }
     .slot.filled {
       background: white;
@@ -244,12 +249,12 @@
       position: absolute;
       left: 0;
       right: 0;
-      bottom: -104px;
+      bottom: 0;
       height: 104px;
       padding: 10px 32px 12px;
       background: rgba(255,255,255,.62);
       border: 1px solid rgba(90,90,64,.16);
-      border-top: 0;
+      border-top: 1px solid rgba(90,90,64,.16);
       border-radius: 0 0 28px 28px;
       box-shadow: 0 22px 46px rgba(47,45,25,.16);
       backdrop-filter: blur(16px);
@@ -291,8 +296,14 @@
       align-items: center;
       justify-content: center;
       transition: transform .25s ease, background .25s ease, color .25s ease, box-shadow .25s ease;
+      touch-action: none;
     }
     .task-card:hover { transform: translateY(-8px) scale(1.03); }
+    .task-card.dragging {
+      opacity: .36;
+      transform: translateY(4px) scale(.94);
+      pointer-events: none;
+    }
     .task-card.selected {
       background: var(--brand-dark);
       color: white;
@@ -302,6 +313,36 @@
     }
     .task-card img { width: min(92px, 80%); height: min(92px, 80%); object-fit: contain; border-radius: 18px; }
     .task-card.removed { opacity: 0; transform: translateY(18px) scale(.8); pointer-events: none; }
+    .drag-ghost, .tutorial-ghost {
+      position: fixed;
+      width: clamp(112px, 11vw, 138px);
+      height: 96px;
+      border: 1px solid rgba(90,90,64,.12);
+      border-radius: 28px;
+      background: white;
+      box-shadow: 0 28px 60px rgba(47,45,25,.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .drag-ghost img, .tutorial-ghost img {
+      width: min(92px, 80%);
+      height: min(92px, 80%);
+      object-fit: contain;
+      border-radius: 18px;
+    }
+    .tutorial-ghost {
+      opacity: .94;
+      outline: 8px solid rgba(234,179,8,.14);
+    }
+    .slot.hint-target {
+      background: rgba(234,179,8,.2);
+      border-color: rgba(234,179,8,.72);
+      animation: pulseSlot .7s ease-in-out infinite;
+    }
 
     .won {
       display: flex;
@@ -345,15 +386,58 @@
     @keyframes drawPath { to { stroke-dashoffset: 0; } }
     @keyframes winPop { from { opacity: 0; transform: translateY(45px) scale(.72); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
+    @media (max-aspect-ratio: 4 / 3) {
+      body { padding: 0; }
+      .game-shell {
+        width: 100vw;
+        height: 100vh;
+        max-height: none;
+        aspect-ratio: auto;
+        border-radius: 0;
+        overflow: hidden;
+      }
+      .background { transform: scale(1); }
+      .welcome { padding: 18px; }
+      .welcome-card {
+        width: min(430px, 88vw);
+        padding: 28px 24px;
+        border-radius: 34px;
+      }
+      .welcome-card h1 {
+        font-size: clamp(34px, 11vw, 48px);
+        line-height: 1;
+        letter-spacing: 0;
+      }
+      .welcome-card p { font-size: clamp(15px, 4.5vw, 18px); }
+      .primary-btn, .reset-btn { font-size: clamp(16px, 5vw, 20px); padding: 14px 28px; }
+      .topbar { height: 74px; padding: 10px 14px; justify-content: space-between; }
+      .topbar h2 { font-size: clamp(20px, 7vw, 28px); letter-spacing: 0; }
+      .topbar p { font-size: 11px; }
+      .counter { min-width: 74px; padding: 8px 10px; }
+      .counter strong { font-size: 22px; }
+      .board { grid-template-columns: 78px 1fr 78px; gap: 6px; padding: 12px 8px 104px; }
+      .source-card, .slot { width: 68px; height: 68px; border-radius: 18px; padding: 6px; }
+      .slot { font-size: 28px; border-width: 3px; }
+      .drawer { height: 88px; padding: 8px 10px 10px; border-radius: 22px 22px 0 0; }
+      .cards { gap: 10px; width: 100%; }
+      .task-card { width: min(28vw, 86px); height: 72px; border-radius: 18px; padding: 8px; }
+      .task-card img { width: 56px; height: 56px; }
+      .drag-ghost, .tutorial-ghost { width: 82px; height: 72px; border-radius: 18px; }
+      .win-card { width: min(430px, 88vw); padding: 32px 24px; border-radius: 36px; }
+      .trophy { width: 84px; height: 84px; margin-bottom: 18px; font-size: 42px; }
+      .win-card h2 { font-size: clamp(30px, 9vw, 42px); letter-spacing: 0; }
+      .win-card p { font-size: 17px; }
+    }
+
     @media (max-width: 900px) {
       body { padding: 10px; }
-      .game-shell { width: min(100vw, calc((100vh - 124px) * 16 / 9)); margin-bottom: 88px; border-radius: 20px; }
+      .game-shell { width: min(100vw, calc((100vh - 20px) * 16 / 9)); margin-bottom: 0; border-radius: 20px; }
       .topbar { height: 78px; padding: 12px 18px; }
       .topbar h2 { font-size: 24px; }
-      .board { grid-template-columns: 132px 1fr 132px; padding: 16px 16px 28px; gap: 8px; }
+      .board { grid-template-columns: 132px 1fr 132px; padding: 16px 16px 104px; gap: 8px; }
       .source-card, .slot { width: 105px; height: 105px; border-radius: 24px; }
       .source-card span, .slot span { font-size: 8px; }
-      .drawer { bottom: -88px; height: 88px; padding: 8px 12px 10px; }
+      .drawer { bottom: 0; height: 88px; padding: 8px 12px 10px; }
       .task-card { width: 104px; border-radius: 22px; padding: 10px; }
       .task-card img { width: 68px; height: 68px; }
       .hint { display: none; }
@@ -396,7 +480,7 @@
       </main>
 
       <footer class="drawer">
-        <div class="hint"><span class="dot"></span>Click a task card, then click the correct team member slot<span class="dot"></span></div>
+        <div class="hint"><span class="dot"></span>Drag each task card into the matching team member slot<span class="dot"></span></div>
         <div class="cards" id="cardList"></div>
       </footer>
     </section>
@@ -406,7 +490,7 @@
         <div class="trophy">🏆</div>
         <h2>🎉 Tasks Assigned!</h2>
         <p>All team members received their perfect tasks.<br>Let the productive day begin!</p>
-        <button class="reset-btn" id="resetBtn">�?Start Tomorrow's Log</button>
+        <button class="reset-btn" id="resetBtn">Continue</button>
       </div>
     </section>
   </div>
@@ -426,14 +510,23 @@
 
     let cards = [];
     let selectedCardId = null;
+    let dragState = null;
+    let tutorialHintPlayed = false;
     let completionSent = false;
 
     function notifyComplete() {
       if (completionSent) return;
       completionSent = true;
+      const nextStoryUrl = '../index.html?start=0a7920b6-9a8a-4e08-bde0-aa76416ceb0d';
       try {
-        window.parent.postMessage({ type: 'PAUL_MINIGAME_COMPLETE' }, '*');
-      } catch (err) {}
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'PAUL_MINIGAME_COMPLETE' }, '*');
+        } else {
+          window.location.href = nextStoryUrl;
+        }
+      } catch (err) {
+        window.location.href = nextStoryUrl;
+      }
     }
     let slots = { 'slot-bird': null, 'slot-butterfly': null, 'slot-bee': null };
 
@@ -454,11 +547,14 @@
     function startGame() {
       cards = shuffle([...ITEMS]);
       selectedCardId = null;
+      dragState = null;
       completionSent = false;
+      tutorialHintPlayed = false;
       slots = { 'slot-bird': null, 'slot-butterfly': null, 'slot-bee': null };
       $('successPaths').innerHTML = '';
       render();
       showScreen('playing');
+      window.setTimeout(playOpeningDragHint, 520);
     }
 
     function render() {
@@ -480,14 +576,16 @@
       $('slotList').innerHTML = SOURCES.map(source => {
         const filled = slots[source.slotId];
         return `
-          <button class="slot ${selectedCardId && !filled ? 'available' : ''} ${filled ? 'filled' : ''}" data-slot="${source.slotId}" aria-label="${source.label} slot">
+          <button class="slot ${dragState && !filled ? 'available' : ''} ${filled ? 'filled' : ''}" data-slot="${source.slotId}" aria-label="${source.label} slot">
             ${filled ? `<img src="${filled.icon}" alt="${filled.label}">` : '?'}
           </button>
         `;
       }).join('');
 
       document.querySelectorAll('.slot').forEach(btn => {
-        btn.addEventListener('click', () => placeCard(btn.dataset.slot, btn));
+        btn.addEventListener('click', () => {
+          if (selectedCardId) placeCard(selectedCardId, btn.dataset.slot, btn);
+        });
       });
     }
 
@@ -499,7 +597,7 @@
       `).join('');
 
       document.querySelectorAll('.task-card').forEach(btn => {
-        btn.addEventListener('click', () => selectCard(btn.dataset.card));
+        btn.addEventListener('pointerdown', startDrag);
       });
     }
 
@@ -509,19 +607,19 @@
       renderSlots();
     }
 
-    function placeCard(slotId, slotButton) {
-      if (!selectedCardId || slots[slotId]) return;
-      const item = ITEMS.find(i => i.id === selectedCardId);
+    function placeCard(itemId, slotId, slotButton) {
+      if (!itemId || slots[slotId]) return;
+      const item = ITEMS.find(i => i.id === itemId);
       if (!item) return;
 
       if (item.targetId === slotId) {
         slots[slotId] = item;
-        cards = cards.filter(c => c.id !== selectedCardId);
+        cards = cards.filter(c => c.id !== itemId);
         selectedCardId = null;
         drawSuccessPath(item);
         render();
         if (Object.values(slots).every(Boolean)) {
-          setTimeout(() => { showScreen('won'); notifyComplete(); }, 850);
+          setTimeout(() => { showScreen('won'); }, 850);
         }
       } else {
         selectedCardId = null;
@@ -530,6 +628,79 @@
         renderCards();
         renderSlots();
       }
+    }
+
+    function startDrag(event) {
+      if (event.button !== undefined && event.button !== 0) return;
+      const source = event.currentTarget;
+      const itemId = source.dataset.card;
+      const item = ITEMS.find(i => i.id === itemId);
+      if (!item) return;
+      event.preventDefault();
+      selectedCardId = null;
+      const rect = source.getBoundingClientRect();
+      const ghost = document.createElement('div');
+      ghost.className = 'drag-ghost';
+      ghost.innerHTML = `<img src="${item.icon}" alt="${item.label}">`;
+      document.body.appendChild(ghost);
+      dragState = { itemId, source, ghost, x: event.clientX - rect.left, y: event.clientY - rect.top, hoverSlot: null };
+      source.classList.add('dragging');
+      renderSlots();
+      moveDrag(event);
+      window.addEventListener('pointermove', moveDrag);
+      window.addEventListener('pointerup', endDrag, { once: true });
+    }
+
+    function moveDrag(event) {
+      if (!dragState) return;
+      dragState.ghost.style.left = (event.clientX - dragState.x) + 'px';
+      dragState.ghost.style.top = (event.clientY - dragState.y) + 'px';
+      const hovered = document.elementFromPoint(event.clientX, event.clientY)?.closest('.slot');
+      const nextSlot = hovered && !slots[hovered.dataset.slot] ? hovered : null;
+      if (dragState.hoverSlot !== nextSlot) {
+        dragState.hoverSlot?.classList.remove('drop-hover');
+        dragState.hoverSlot = nextSlot;
+        dragState.hoverSlot?.classList.add('drop-hover');
+      }
+    }
+
+    function endDrag(event) {
+      if (!dragState) return;
+      window.removeEventListener('pointermove', moveDrag);
+      const { itemId, source, ghost, hoverSlot } = dragState;
+      hoverSlot?.classList.remove('drop-hover');
+      source.classList.remove('dragging');
+      ghost.remove();
+      dragState = null;
+      if (hoverSlot) placeCard(itemId, hoverSlot.dataset.slot, hoverSlot);
+      else renderSlots();
+    }
+
+    function playOpeningDragHint() {
+      if (tutorialHintPlayed || !screens.playing.classList.contains('active')) return;
+      const card = document.querySelector('.task-card[data-card="honey"]');
+      const slot = document.querySelector('.slot[data-slot="slot-bee"]');
+      const item = ITEMS.find(i => i.id === 'honey');
+      if (!card || !slot || !item || slots['slot-bee']) return;
+      tutorialHintPlayed = true;
+      const from = card.getBoundingClientRect();
+      const to = slot.getBoundingClientRect();
+      const ghost = document.createElement('div');
+      ghost.className = 'tutorial-ghost';
+      ghost.innerHTML = `<img src="${item.icon}" alt="${item.label}">`;
+      document.body.appendChild(ghost);
+      slot.classList.add('hint-target');
+      ghost.style.left = from.left + 'px';
+      ghost.style.top = from.top + 'px';
+      const dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+      const dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+      ghost.animate([
+        { transform: 'translate(0, 0) scale(.92)', opacity: 0 },
+        { transform: 'translate(0, 0) scale(1.02)', opacity: .96, offset: .18 },
+        { transform: `translate(${dx}px, ${dy}px) scale(1.02)`, opacity: .96, offset: .78 },
+        { transform: `translate(${dx}px, ${dy}px) scale(.86)`, opacity: 0 }
+      ], { duration: 1900, easing: 'cubic-bezier(.2,.72,.16,1)' });
+      window.setTimeout(() => { ghost.remove(); slot.classList.remove('hint-target'); }, 1950);
     }
 
     function drawSuccessPath(item) {
@@ -541,7 +712,7 @@
     }
 
     $('startBtn').addEventListener('click', startGame);
-    $('resetBtn').addEventListener('click', startGame);
+    $('resetBtn').addEventListener('click', notifyComplete);
     renderTeam();
   </script>
 </body>

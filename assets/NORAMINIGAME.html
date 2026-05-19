@@ -2,16 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Norah's GAME</title>
+<title>Nora's Game</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#080400;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
-#game{position:relative;width:min(1280px,98vw);aspect-ratio:16/9;max-height:98vh;border:1px solid rgba(255,208,64,.22);border-radius:22px;box-shadow:0 22px 80px rgba(0,0,0,.55);overflow:hidden;background:#060300}
+body{background:linear-gradient(30deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(150deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(30deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(150deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),#080400;background-position:0 0,0 0,34px 60px,34px 60px;background-size:68px 120px;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
+#game{position:relative;width:min(1280px,98vw);aspect-ratio:16/9;max-height:98vh;border:1px solid rgba(255,208,64,.22);border-radius:22px;box-shadow:0 22px 80px rgba(0,0,0,.55);overflow:hidden;background:#100700}
 #c{width:100%;height:100%;display:block}
-#ui{position:absolute;right:28px;top:50%;transform:translateY(-50%);background:rgba(8,3,0,.86);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:18px 22px;border-radius:16px;line-height:2.2;min-width:220px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
-#ui h2{color:#ffd040;font-size:20px;margin-bottom:4px;letter-spacing:.4px}
-.row{display:flex;justify-content:space-between;font-size:16px;gap:14px}
+#ui{position:absolute;right:18px;top:18px;background:rgba(8,3,0,.88);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:14px 16px;border-radius:14px;line-height:1.5;min-width:240px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
+#ui h2{color:#ffd040;font-size:22px;margin-bottom:10px;letter-spacing:.4px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:15px;gap:14px;margin-top:8px}
 .v{color:#ffe880;font-weight:bold}
+.steps-value{font-size:34px;line-height:1;color:#fff0a2;text-shadow:0 0 14px rgba(255,208,64,.55)}
+.meter{height:12px;margin-top:7px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,208,64,.25);overflow:hidden}
+.meter-fill{width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb52e,#ffe87c);box-shadow:0 0 14px rgba(255,208,64,.7);transition:width .22s ease}
 .red{color:#ed8166}
 .tip{margin-top:10px;font-size:13px;opacity:.45;line-height:1.7}
 #ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
@@ -28,10 +31,11 @@ button:hover{background:#ffe860}
 <div id="game">
 <canvas id="c"></canvas>
 <div id="ui">
-  <h2>🐝 Norah's GAME</h2>
-  <div class="row"><span>Pollen 🌸</span><span class="v" id="u_p">0/10</span></div>
-  <div class="row"><span>Steps 👣</span><span class="v" id="u_s2">0</span></div>
-  <div class="row"><span>Speed 💨</span><span class="v" id="u_s">1</span></div>
+  <h2>Nora's Game</h2>
+  <div class="row"><span>Pollen</span><span class="v" id="u_p">0/10</span></div>
+  <div class="meter"><div class="meter-fill" id="u_pbar"></div></div>
+  <div class="row"><span>Steps</span><span class="v steps-value" id="u_s2">0</span></div>
+  <div class="row"><span>Speed Level</span><span class="v" id="u_s">0</span></div>
   <div class="tip">← → ↑ ↓ to move<br>W S Q E for all 6 dirs<br>or click a glowing hex<br>rocks & branches refresh after each flower</div>
 </div>
 </div>
@@ -63,6 +67,35 @@ function poly(q,r,s=1){
   ctx.closePath();
 }
 
+function drawHoneycombBackground(){
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#3b1b02');
+  bg.addColorStop(.45,'#160900');
+  bg.addColorStop(1,'#050200');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,W,H);
+  const cell=54;
+  const hexH=cell*Math.sqrt(3);
+  ctx.lineWidth=2;
+  for(let y=-hexH;y<H+hexH;y+=hexH){
+    for(let x=-cell;x<W+cell;x+=cell*1.5){
+      const ox=((Math.round(y/hexH)%2) ? cell*.75 : 0);
+      ctx.beginPath();
+      for(let i=0;i<6;i++){
+        const a=Math.PI/3*i;
+        const px=x+ox+cell*Math.cos(a);
+        const py=y+cell*Math.sin(a);
+        i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+      }
+      ctx.closePath();
+      ctx.fillStyle='rgba(255,177,35,.045)';
+      ctx.fill();
+      ctx.strokeStyle='rgba(255,197,58,.18)';
+      ctx.stroke();
+    }
+  }
+}
+
 function bfs(sq,sr,eq,er){
   const vis=new Set(),qu=[[sq,sr,0]];vis.add(K(sq,sr));
   while(qu.length){
@@ -77,6 +110,7 @@ function bfs(sq,sr,eq,er){
 }
 
 let cells,bee,beeDraw,pollenPos,pollen,steps,anim=null;
+let showTapHint = !sessionStorage.getItem('noraTapHintSeen');
 
 function spawnPollen(){
   let pq,pr,d,t=0;
@@ -128,12 +162,13 @@ function init(){
       if(Math.abs(q+r)<=GR)cells.set(K(q,r),'E');
 
   bee={q:0,r:0};beeDraw=hp(0,0);pollen=0;steps=0;anim=null;
+  showTapHint = !sessionStorage.getItem('noraTapHintSeen');
   generateObstacles();
   document.getElementById('ov').classList.remove('on');
   spawnPollen();render();uiUpdate();
 }
 
-const speed=()=>1+Math.floor(pollen/3);
+const speed=()=>pollen;
 
 function easeInOut(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
 
@@ -162,6 +197,10 @@ function move(dq,dr){
   if(anim)return;
   const nq=bee.q+dq,nr=bee.r+dr,nk=K(nq,nr);
   if(!cells.has(nk)||cells.get(nk)!=='E')return;
+  if(showTapHint){
+    showTapHint=false;
+    sessionStorage.setItem('noraTapHintSeen','1');
+  }
   const from={...beeDraw},to=hp(nq,nr);
   bee.q=nq;bee.r=nr;
   anim={from,to,t0:performance.now(),dur:360};
@@ -170,9 +209,10 @@ function move(dq,dr){
 
 function uiUpdate(){
   document.getElementById('u_p').textContent=`${pollen}/10`;
+  document.getElementById('u_pbar').style.width=`${Math.min(100,pollen*10)}%`;
   document.getElementById('u_s2').textContent=steps;
   const sp=speed();
-  document.getElementById('u_s').textContent=sp>1?`Lv ${sp} ↑`:sp;
+  document.getElementById('u_s').textContent=`Lv ${sp}`;
 }
 
 function endGame(){
@@ -185,11 +225,37 @@ function endGame(){
   `;
 }
 
+function drawTapHint(pulse){
+  if(!showTapHint || anim || steps>0)return;
+  const target=DIRS.map(([dq,dr])=>({q:bee.q+dq,r:bee.r+dr}))
+    .find(pos=>cells.has(K(pos.q,pos.r))&&cells.get(K(pos.q,pos.r))==='E');
+  if(!target)return;
+  const{x,y}=hp(target.q,target.r);
+  const text='Tap here';
+  ctx.save();
+  ctx.font='bold 22px Georgia, serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  const padX=18,w=ctx.measureText(text).width+padX*2,h=34;
+  const bx=x-w/2,by=y-h/2;
+  ctx.shadowColor='rgba(0,0,0,.55)';
+  ctx.shadowBlur=12;
+  ctx.fillStyle=`rgba(255,232,120,${0.86+pulse*.12})`;
+  ctx.beginPath();
+  ctx.roundRect(bx,by,w,h,17);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(86,45,0,.85)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.fillStyle='#2b1500';
+  ctx.fillText(text,x,y+1);
+  ctx.restore();
+}
+
 function render(){
   ctx.clearRect(0,0,W,H);
-  const bg=ctx.createRadialGradient(CX,CY,40,CX,CY,380);
-  bg.addColorStop(0,'#1c0e02');bg.addColorStop(1,'#060300');
-  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  drawHoneycombBackground();
 
   for(const[k,t]of cells){
     const[q,r]=k.split(',').map(Number);
@@ -248,6 +314,7 @@ function render(){
       ctx.beginPath();ctx.arc(x,y,SZ*.13+pulse*SZ*.04,0,Math.PI*2);ctx.fill();
     }
   }
+  drawTapHint(pulse);
 
   if(pollenPos){
     const{x,y}=hp(pollenPos.q,pollenPos.r);
