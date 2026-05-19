@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Norah's GAME</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080400;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
+#game{position:relative;width:min(1280px,98vw);aspect-ratio:16/9;max-height:98vh;border:1px solid rgba(255,208,64,.22);border-radius:22px;box-shadow:0 22px 80px rgba(0,0,0,.55);overflow:hidden;background:#060300}
+#c{width:100%;height:100%;display:block}
+#ui{position:absolute;right:28px;top:50%;transform:translateY(-50%);background:rgba(8,3,0,.86);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:18px 22px;border-radius:16px;line-height:2.2;min-width:220px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
+#ui h2{color:#ffd040;font-size:20px;margin-bottom:4px;letter-spacing:.4px}
+.row{display:flex;justify-content:space-between;font-size:16px;gap:14px}
+.v{color:#ffe880;font-weight:bold}
+.red{color:#ed8166}
+.tip{margin-top:10px;font-size:13px;opacity:.45;line-height:1.7}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
+#ov.on{display:flex}
+#bx{background:#0c0500;border:2px solid #ffd040;color:#edb840;padding:42px 60px;border-radius:20px;text-align:center;max-width:480px}
+#bx h2{color:#ffd040;font-size:32px;margin-bottom:16px}
+#bx p{font-size:17px;line-height:1.9}
+.q{color:#ed8166;font-style:italic;margin-top:14px;font-size:15px;line-height:1.8}
+button{margin-top:22px;background:#ffd040;color:#080400;border:none;padding:13px 36px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:bold}
+button:hover{background:#ffe860}
+</style>
+</head>
+<body>
+<div id="game">
+<canvas id="c"></canvas>
+<div id="ui">
+  <h2>🐝 Norah's GAME</h2>
+  <div class="row"><span>Pollen 🌸</span><span class="v" id="u_p">0/10</span></div>
+  <div class="row"><span>Steps 👣</span><span class="v" id="u_s2">0</span></div>
+  <div class="row"><span>Speed 💨</span><span class="v" id="u_s">1</span></div>
+  <div class="tip">← → ↑ ↓ to move<br>W S Q E for all 6 dirs<br>or click a glowing hex<br>rocks & branches refresh after each flower</div>
+</div>
+</div>
+<div id="ov">
+  <div id="bx">
+    <h2 id="b_t"></h2>
+    <div id="b_b"></div>
+    <button onclick="init()">Play Again 🐝</button>
+  </div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+cv.width=1280;cv.height=720;
+const W=cv.width,H=cv.height,CX=560,CY=H/2,SZ=40,GR=5;
+const K=(q,r)=>`${q},${r}`;
+const DIRS=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
+const R3=Math.sqrt(3);
+
+// pointy-top hex → pixel
+function hp(q,r){return{x:CX+SZ*(R3*q+R3/2*r),y:CY+SZ*1.5*r}}
+
+function poly(q,r,s=1){
+  const{x,y}=hp(q,r);ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a=Math.PI/3*i-Math.PI/6;
+    i?ctx.lineTo(x+SZ*s*Math.cos(a),y+SZ*s*Math.sin(a))
+     :ctx.moveTo(x+SZ*s*Math.cos(a),y+SZ*s*Math.sin(a));
+  }
+  ctx.closePath();
+}
+
+function bfs(sq,sr,eq,er){
+  const vis=new Set(),qu=[[sq,sr,0]];vis.add(K(sq,sr));
+  while(qu.length){
+    const[cq,cr,d]=qu.shift();
+    if(cq===eq&&cr===er)return d;
+    for(const[dq,dr]of DIRS){
+      const nq=cq+dq,nr=cr+dr,nk=K(nq,nr);
+      if(!vis.has(nk)&&cells.has(nk)&&cells.get(nk)==='E'){vis.add(nk);qu.push([nq,nr,d+1])}
+    }
+  }
+  return 999;
+}
+
+let cells,bee,beeDraw,pollenPos,pollen,steps,anim=null;
+
+function spawnPollen(){
+  let pq,pr,d,t=0;
+  do{
+    const emp=[...cells.keys()].filter(k=>cells.get(k)==='E'&&k!==K(bee.q,bee.r));
+    const far=emp.filter(k=>{
+      const[q,r]=k.split(',').map(Number);
+      return Math.abs(q-bee.q)+Math.abs(r-bee.r)+Math.abs(q+r-bee.q-bee.r)>=6;
+    });
+    const pool=far.length?far:emp;
+    [pq,pr]=pool[Math.floor(Math.random()*pool.length)].split(',').map(Number);
+    d=bfs(bee.q,bee.r,pq,pr);
+  }while(d===999&&++t<30);
+  pollenPos={q:pq,r:pr};
+}
+
+function generateObstacles(){
+  // clear old obstacles first
+  for(const k of cells.keys())cells.set(k,'E');
+
+  // keep the bee and immediate movement options open so the game never traps Norah
+  const safe=new Set([K(bee.q,bee.r),...DIRS.map(([dq,dr])=>K(bee.q+dq,bee.r+dr))]);
+  const candidates=[...cells.keys()].filter(k=>!safe.has(k));
+  const targetCount=Math.floor(candidates.length*.25);
+
+  // retry a few times until the bee still has a good reachable area
+  for(let attempt=0;attempt<40;attempt++){
+    for(const k of cells.keys())cells.set(k,'E');
+    const shuffled=[...candidates].sort(()=>Math.random()-.5);
+    shuffled.slice(0,targetCount).forEach(k=>{
+      cells.set(k,Math.random()<.5?'R':'B'); // R = rock, B = branch
+    });
+
+    let reachable=0;
+    for(const k of cells.keys()){
+      if(cells.get(k)==='E'){
+        const[q,r]=k.split(',').map(Number);
+        if(bfs(bee.q,bee.r,q,r)<999)reachable++;
+      }
+    }
+    if(reachable>28)return;
+  }
+}
+
+function init(){
+  cells=new Map();
+  for(let q=-GR;q<=GR;q++)
+    for(let r=-GR;r<=GR;r++)
+      if(Math.abs(q+r)<=GR)cells.set(K(q,r),'E');
+
+  bee={q:0,r:0};beeDraw=hp(0,0);pollen=0;steps=0;anim=null;
+  generateObstacles();
+  document.getElementById('ov').classList.remove('on');
+  spawnPollen();render();uiUpdate();
+}
+
+const speed=()=>1+Math.floor(pollen/3);
+
+function easeInOut(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+
+function finishMove(){
+  steps++;
+  if(pollenPos&&bee.q===pollenPos.q&&bee.r===pollenPos.r){
+    pollen++;
+    if(pollen>=10){anim=null;render();uiUpdate();endGame();return}
+    generateObstacles(); // every new flower refreshes the rocks and branches
+    spawnPollen();
+  }
+  anim=null;render();uiUpdate();
+}
+
+function animateMove(now){
+  if(!anim)return;
+  const t=Math.min((now-anim.t0)/anim.dur,1),e=easeInOut(t);
+  beeDraw.x=anim.from.x+(anim.to.x-anim.from.x)*e;
+  beeDraw.y=anim.from.y+(anim.to.y-anim.from.y)*e+Math.sin(e*Math.PI)*-10;
+  render();
+  if(t<1)requestAnimationFrame(animateMove);
+  else{beeDraw={...anim.to};finishMove()}
+}
+
+function move(dq,dr){
+  if(anim)return;
+  const nq=bee.q+dq,nr=bee.r+dr,nk=K(nq,nr);
+  if(!cells.has(nk)||cells.get(nk)!=='E')return;
+  const from={...beeDraw},to=hp(nq,nr);
+  bee.q=nq;bee.r=nr;
+  anim={from,to,t0:performance.now(),dur:360};
+  requestAnimationFrame(animateMove);
+}
+
+function uiUpdate(){
+  document.getElementById('u_p').textContent=`${pollen}/10`;
+  document.getElementById('u_s2').textContent=steps;
+  const sp=speed();
+  document.getElementById('u_s').textContent=sp>1?`Lv ${sp} ↑`:sp;
+}
+
+function endGame(){
+  try { window.parent.postMessage({type:'NORAMINIGAME_COMPLETE'}, '*'); } catch(e) {}
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('b_t').textContent='🌟 Mission Complete!';
+  document.getElementById('b_b').innerHTML=`
+    <p>Pollen 10/10 &nbsp;·&nbsp; Total steps ${steps}</p>
+    <p class="q">Great job! Norah's bee found every flower through the rocks and branches.</p>
+  `;
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+  const bg=ctx.createRadialGradient(CX,CY,40,CX,CY,380);
+  bg.addColorStop(0,'#1c0e02');bg.addColorStop(1,'#060300');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  for(const[k,t]of cells){
+    const[q,r]=k.split(',').map(Number);
+    if(t==='R'||t==='B'){
+      // warm brown base under both rocks and branches
+      const w=Math.sin(q*.55+r*.7+2.4)*.5+.5;
+      poly(q,r);ctx.fillStyle=`hsl(${28+w*10},${45+w*12}%,${32+w*10}%)`;ctx.fill();
+      ctx.strokeStyle='rgba(96,54,18,.82)';ctx.lineWidth=1.5;ctx.stroke();
+      const{x,y}=hp(q,r);
+      const grass=ctx.createRadialGradient(x-SZ*.22,y-SZ*.28,SZ*.04,x,y,SZ*.8);
+      grass.addColorStop(0,'rgba(205,255,130,.18)');grass.addColorStop(1,'rgba(0,45,0,.12)');
+      poly(q,r,.84);ctx.fillStyle=grass;ctx.fill();
+      if(t==='R'){
+        ctx.fillStyle='#2d1808';
+        ctx.beginPath();ctx.ellipse(x,y,SZ*.44,SZ*.36,0.4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#3b230f';
+        ctx.beginPath();ctx.ellipse(x-5,y-4,SZ*.22,SZ*.15,-.4,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#140903';
+        ctx.beginPath();ctx.ellipse(x+8,y+7,SZ*.18,SZ*.12,.2,0,Math.PI*2);ctx.fill();
+      }else{
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.rotate((q-r)*0.32);
+        ctx.strokeStyle='#4b2a0c';ctx.lineWidth=8;ctx.lineCap='round';
+        ctx.beginPath();ctx.moveTo(-SZ*.42,SZ*.08);ctx.lineTo(SZ*.42,-SZ*.08);ctx.stroke();
+        ctx.strokeStyle='#6b3b12';ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(-SZ*.08,0);ctx.lineTo(-SZ*.28,-SZ*.25);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(SZ*.12,-SZ*.02);ctx.lineTo(SZ*.34,SZ*.22);ctx.stroke();
+        ctx.restore();
+      }
+    }else{
+      const w=Math.sin(q*.6+r*.5+1.8)*.5+.5;
+      poly(q,r);ctx.fillStyle=`hsl(${33+w*14},${62+w*12}%,${44+w*20}%)`;ctx.fill();
+      ctx.strokeStyle='rgba(90,45,0,.75)';ctx.lineWidth=1.5;ctx.stroke();
+      const{x,y}=hp(q,r);
+      const g=ctx.createRadialGradient(x-SZ*.22,y-SZ*.28,SZ*.04,x,y,SZ*.78);
+      g.addColorStop(0,'rgba(255,210,70,.2)');g.addColorStop(1,'rgba(0,0,0,.18)');
+      poly(q,r,.83);ctx.fillStyle=g;ctx.fill();
+    }
+  }
+
+  // highlight reachable neighbors / next selectable positions
+  const pulse=(Math.sin(performance.now()/260)+1)/2;
+  for(const[dq,dr]of DIRS){
+    const nq=bee.q+dq,nr=bee.r+dr,nk=K(nq,nr);
+    if(cells.has(nk)&&cells.get(nk)==='E'){
+      poly(nq,nr,.94);
+      ctx.fillStyle=`rgba(255,220,70,${0.16+pulse*0.10})`;
+      ctx.fill();
+      poly(nq,nr,.98);
+      ctx.strokeStyle=`rgba(255,232,120,${0.68+pulse*0.22})`;
+      ctx.lineWidth=3.4;
+      ctx.stroke();
+      const{x,y}=hp(nq,nr);
+      ctx.fillStyle=`rgba(255,245,170,${0.55+pulse*0.25})`;
+      ctx.beginPath();ctx.arc(x,y,SZ*.13+pulse*SZ*.04,0,Math.PI*2);ctx.fill();
+    }
+  }
+
+  if(pollenPos){
+    const{x,y}=hp(pollenPos.q,pollenPos.r);
+    const g=ctx.createRadialGradient(x,y,2,x,y,SZ*.9);
+    g.addColorStop(0,'rgba(255,100,180,.4)');g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,SZ*.9,0,Math.PI*2);ctx.fill();
+    ctx.font=`${SZ*.95}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.shadowColor='#ff69b4';ctx.shadowBlur=20;ctx.fillText('🌸',x,y);ctx.shadowBlur=0;
+  }
+
+  const{x,y}=beeDraw||hp(bee.q,bee.r);
+  ctx.save();
+  ctx.translate(x,y);
+  if(anim){ctx.rotate(Math.sin(performance.now()/80)*0.08)}
+  ctx.font=`${SZ*1.05}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor='#ffd040';ctx.shadowBlur=18;ctx.fillText('🐝',0,0);ctx.restore();ctx.shadowBlur=0;
+}
+
+// Arrow keys + WASD + QE → all 6 pointy-top hex directions
+document.addEventListener('keydown',e=>{
+  const m={
+    ArrowRight:[1,0], ArrowLeft:[-1,0],
+    ArrowUp:[1,-1],   ArrowDown:[-1,1],
+    d:[1,0], a:[-1,0], w:[0,-1], s:[0,1], q:[-1,1], e:[1,-1]
+  };
+  if(m[e.key]){e.preventDefault();move(...m[e.key])}
+});
+
+cv.addEventListener('click',e=>{
+  const rc=cv.getBoundingClientRect();
+  const mx=(e.clientX-rc.left)*(W/rc.width),my=(e.clientY-rc.top)*(H/rc.height);
+  let best=null,bd=SZ*1.4;
+  for(const k of cells.keys()){
+    const[q,r]=k.split(',').map(Number);
+    const{x,y}=hp(q,r);
+    const d=Math.hypot(mx-x,my-y);
+    if(d<bd){bd=d;best={q,r}}
+  }
+  if(best){
+    const dq=best.q-bee.q,dr=best.r-bee.r;
+    if(DIRS.some(([a,b])=>a===dq&&b===dr))move(dq,dr);
+  }
+});
+
+function loop(){
+  if(!anim)render();
+  requestAnimationFrame(loop);
+}
+init();
+requestAnimationFrame(loop);
+</script>
+
+<script>
+(function(){
+  let vSkipCount = 0;
+  let vSkipTimer = null;
+  window.addEventListener('keydown', function(e){
+    if ((e.key || '').toLowerCase() !== 'v') return;
+    vSkipCount += 1;
+    clearTimeout(vSkipTimer);
+    vSkipTimer = setTimeout(function(){ vSkipCount = 0; }, 1400);
+    if (vSkipCount >= 4) {
+      vSkipCount = 0;
+      clearTimeout(vSkipTimer);
+      try { window.parent.postMessage({type:'MINIGAME_SKIP_VVVV'}, '*'); } catch(err) {}
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

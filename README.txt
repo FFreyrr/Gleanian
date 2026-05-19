@@ -1,0 +1,1 @@
+Open index.html in a browser. Keep the assets folder next to index.html. This version uses the updated Arcweave order, black background, centered half-screen layout, click-to-continue text, and framed choices. Videos are muted for browser autoplay compatibility.
