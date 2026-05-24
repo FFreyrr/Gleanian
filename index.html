@@ -221,9 +221,16 @@
     opacity:0;
     pointer-events:none;
   }
+  .app.final-minigame {
+    width:100vw;
+    height:100vh;
+  }
   .app.final-minigame header {
     opacity:0;
     pointer-events:none;
+  }
+  .app.final-minigame .story-card {
+    display:none;
   }
   .app.cover-page header {
     opacity:0;
@@ -395,13 +402,13 @@
   .speaker.nora { color:#ffd45d; }
   .speaker.jenny { color:#ffe28a; }
   .speaker.terra { color:#e8b947; }
-  .speaker.linda { color:#f7c958; }
+  .speaker.linda { color:#c994ff; }
   .speaker.eloween { color:#ffdf78; }
   .speaker.xylia { color:#f1c35d; }
   .speaker.paul { color:#7eb8ff; }
   .speaker.harry { color:#9fd0ff; }
-  .speaker.john { color:#65a3f2; }
-  .speaker.saul { color:#4f86d8; }
+  .speaker.john { color:#6fdc79; }
+  .speaker.saul { color:#ff6666; }
   .speaker.eshu { color:#3f72c8; }
   .speaker.elegua { color:#8cc4ff; }
   .continue-dot {
@@ -936,7 +943,7 @@ function isAnyMiniGame(node) {
   return isNorahMiniGame(node) || isPaulMiniGame(node) || isFinalMiniGame(node);
 }
 function isFullscreenMiniGame(node) {
-  return isPaulMiniGame(node);
+  return isPaulMiniGame(node) || isFinalMiniGame(node);
 }
 function isNoraIntroNode(node) {
   return normalizedTitle(node) === 'NORA INTRO VIDEO';
