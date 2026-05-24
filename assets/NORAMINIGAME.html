@@ -5,9 +5,9 @@
 <title>Nora's Game</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:linear-gradient(30deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(150deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(30deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),linear-gradient(150deg,rgba(255,198,60,.08) 12%,transparent 12.5%,transparent 87%,rgba(255,198,60,.08) 87.5%,rgba(255,198,60,.08)),#080400;background-position:0 0,0 0,34px 60px,34px 60px;background-size:68px 120px;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
-#game{position:relative;width:min(1280px,98vw);aspect-ratio:16/9;max-height:98vh;border:1px solid rgba(255,208,64,.22);border-radius:22px;box-shadow:0 22px 80px rgba(0,0,0,.55);overflow:hidden;background:#100700}
-#c{width:100%;height:100%;display:block}
+body{background:#080400;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
+#game{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#100700}
+#c{width:100vw;height:100vh;display:block}
 #ui{position:absolute;right:18px;top:18px;background:rgba(8,3,0,.88);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:14px 16px;border-radius:14px;line-height:1.5;min-width:240px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
 #ui h2{color:#ffd040;font-size:22px;margin-bottom:10px;letter-spacing:.4px}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:15px;gap:14px;margin-top:8px}
@@ -16,15 +16,90 @@ body{background:linear-gradient(30deg,rgba(255,198,60,.08) 12%,transparent 12.5%
 .meter{height:12px;margin-top:7px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,208,64,.25);overflow:hidden}
 .meter-fill{width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb52e,#ffe87c);box-shadow:0 0 14px rgba(255,208,64,.7);transition:width .22s ease}
 .red{color:#ed8166}
-.tip{margin-top:10px;font-size:13px;opacity:.45;line-height:1.7}
-#ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:20}
 #ov.on{display:flex}
-#bx{background:#0c0500;border:2px solid #ffd040;color:#edb840;padding:42px 60px;border-radius:20px;text-align:center;max-width:480px}
+#bx{background:#0c0500;border:2px solid #ffd040;color:#edb840;padding:42px 60px;border-radius:20px;text-align:center;max-width:560px}
 #bx h2{color:#ffd040;font-size:32px;margin-bottom:16px}
-#bx p{font-size:17px;line-height:1.9}
+#bx p{font-size:18px;line-height:1.8}
 .q{color:#ed8166;font-style:italic;margin-top:14px;font-size:15px;line-height:1.8}
-button{margin-top:22px;background:#ffd040;color:#080400;border:none;padding:13px 36px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:bold}
+button{margin-top:26px;background:#ffd040;color:#080400;border:none;padding:13px 38px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:bold}
 button:hover{background:#ffe860}
+
+
+/* === Shared UI style layer: soft woodland storybook UI === */
+:root{
+  --ui-cream:#fff8e8;
+  --ui-ink:#2f341f;
+  --ui-muted:#6f6d50;
+  --ui-olive:#5e6b3d;
+  --ui-gold:#d9a84f;
+  --ui-red:#b8695f;
+  --ui-panel:rgba(255,248,232,.90);
+  --ui-panel-strong:rgba(255,248,232,.97);
+  --ui-border:rgba(91,97,54,.22);
+  --ui-shadow:0 22px 60px rgba(36,31,18,.28);
+  --ui-soft-shadow:0 12px 30px rgba(36,31,18,.16);
+}
+body{font-family:Georgia,'Times New Roman',serif;background:#e9dfcc;color:var(--ui-ink)}
+#game{background:#e9dfcc}
+#ui{
+  background:var(--ui-panel);
+  color:var(--ui-ink);
+  border:1px solid var(--ui-border);
+  border-radius:28px;
+  box-shadow:var(--ui-shadow);
+  backdrop-filter:blur(10px) saturate(1.05);
+  padding:16px 18px;
+}
+#ui h2{color:var(--ui-ink);font-style:italic;letter-spacing:-.02em}
+.row{color:var(--ui-muted)}
+.v,.steps-value{color:var(--ui-gold);text-shadow:none}
+.meter{background:rgba(91,97,54,.12);border:1px solid var(--ui-border)}
+.meter-fill{background:linear-gradient(90deg,#b78b3e,#d9a84f);box-shadow:0 0 14px rgba(217,168,79,.42)}
+.red,.q{color:var(--ui-red)}
+#ov{background:rgba(31,38,20,.58);backdrop-filter:blur(5px)}
+#bx{
+  background:var(--ui-panel-strong);
+  color:var(--ui-ink);
+  border:1px solid var(--ui-border);
+  border-radius:34px;
+  box-shadow:var(--ui-shadow);
+}
+#bx h2{color:var(--ui-ink);font-style:italic;letter-spacing:-.025em}
+#bx p{color:var(--ui-muted)}
+button{
+  background:linear-gradient(180deg,#6f7947,#4d5a32);
+  color:#fff8e8;
+  border:1px solid rgba(255,248,232,.36);
+  border-radius:999px;
+  box-shadow:0 14px 28px rgba(62,73,39,.24);
+}
+button:hover{background:linear-gradient(180deg,#76834d,#536139);filter:brightness(1.03)}
+@media (max-width:700px){#ui{right:12px;top:12px;min-width:210px;border-radius:24px}#bx{margin:0 18px;padding:34px 28px}}
+
+/* === responsive board/layout fix === */
+#ui{z-index:5}
+@media (max-width:1280px){
+  #ui{right:12px;top:12px;min-width:220px;padding:14px 16px}
+}
+@media (max-width:980px){
+  #ui{
+    left:50%;right:auto;top:12px;transform:translateX(-50%);
+    width:min(94vw,720px);min-width:0;
+    display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;
+    padding:14px 16px 16px;border-radius:24px;
+  }
+  #ui h2{width:100%;margin-bottom:2px;text-align:center;font-size:20px}
+  #ui .row{flex:1 1 160px;margin-top:0}
+  #ui .meter{width:100%;margin-top:0;order:10}
+}
+@media (max-width:640px){
+  #ui{width:min(96vw,560px);padding:12px 14px 14px;gap:6px 12px}
+  #ui h2{font-size:18px}
+  .row{font-size:14px}
+  .steps-value{font-size:28px}
+}
+
 </style>
 </head>
 <body>
@@ -36,20 +111,52 @@ button:hover{background:#ffe860}
   <div class="meter"><div class="meter-fill" id="u_pbar"></div></div>
   <div class="row"><span>Steps</span><span class="v steps-value" id="u_s2">0</span></div>
   <div class="row"><span>Speed Level</span><span class="v" id="u_s">0</span></div>
-  <div class="tip">← → ↑ ↓ to move<br>W S Q E for all 6 dirs<br>or click a glowing hex<br>rocks & branches refresh after each flower</div>
 </div>
 </div>
-<div id="ov">
+<div id="ov" class="on">
   <div id="bx">
-    <h2 id="b_t"></h2>
-    <div id="b_b"></div>
-    <button onclick="init()">Play Again 🐝</button>
+    <h2 id="b_t">A bumblebee’s day</h2>
+    <div id="b_b">
+      <p>Your busy day as a worker begins!</p>
+      <p>Move around, avoid seeds and rocks, and collect 10 flower pollen.</p>
+    </div>
+    <button id="ov_btn" onclick="startGame()">Start</button>
   </div>
 </div>
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
-cv.width=1280;cv.height=720;
-const W=cv.width,H=cv.height,CX=560,CY=H/2,SZ=40,GR=5;
+const uiPanel=document.getElementById('ui');
+function resizeCanvas(){
+  cv.width=window.innerWidth;
+  cv.height=window.innerHeight;
+}
+function updateLayout(){
+  resizeCanvas();
+  W=cv.width;H=cv.height;
+  const margin=Math.max(12,Math.min(22,Math.round(Math.min(W,H)*0.02)));
+  const uiRect=uiPanel.getBoundingClientRect();
+  let leftPad=margin,rightPad=margin,topPad=margin,bottomPad=margin;
+  const isTopBar=W<=980;
+  if(isTopBar){
+    topPad=Math.max(topPad,Math.ceil(uiRect.bottom)+margin);
+  }else{
+    rightPad=Math.max(rightPad,Math.ceil(W-uiRect.left)+margin);
+  }
+  const playW=Math.max(220,W-leftPad-rightPad);
+  const playH=Math.max(220,H-topPad-bottomPad);
+  const boardWFactor=2*Math.sqrt(3)*(GR+0.5);
+  const boardHFactor=3*GR+2;
+  SZ=Math.max(20,Math.min(48,Math.floor(Math.min(playW/boardWFactor,playH/boardHFactor))));
+  CX=leftPad+playW/2;
+  CY=topPad+playH/2;
+  if(bee)beeDraw=hp(bee.q,bee.r);
+}
+resizeCanvas();
+let W=cv.width,H=cv.height,CX=W/2,CY=H/2,SZ=36,GR=5;
+window.addEventListener('resize',()=>{
+  updateLayout();
+  render();
+});
 const K=(q,r)=>`${q},${r}`;
 const DIRS=[[1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1]];
 const R3=Math.sqrt(3);
@@ -110,7 +217,9 @@ function bfs(sq,sr,eq,er){
 }
 
 let cells,bee,beeDraw,pollenPos,pollen,steps,anim=null;
-let showTapHint = !sessionStorage.getItem('noraTapHintSeen');
+let gameStarted=false, gameFinished=false;
+let showTapHint = false;
+updateLayout();
 
 function spawnPollen(){
   let pq,pr,d,t=0;
@@ -162,10 +271,32 @@ function init(){
       if(Math.abs(q+r)<=GR)cells.set(K(q,r),'E');
 
   bee={q:0,r:0};beeDraw=hp(0,0);pollen=0;steps=0;anim=null;
-  showTapHint = !sessionStorage.getItem('noraTapHintSeen');
+  // Show a first-move guide after entering the game. It disappears after the first valid tap.
+  showTapHint = true;
   generateObstacles();
-  document.getElementById('ov').classList.remove('on');
   spawnPollen();render();uiUpdate();
+}
+
+function startGame(){
+  gameStarted=true;
+  gameFinished=false;
+  const btn=document.getElementById('ov_btn');
+  btn.textContent='Start';
+  btn.onclick=startGame;
+  document.getElementById('ov').classList.remove('on');
+  init();
+}
+
+function continueNext(){
+  gameStarted=false;
+  gameFinished=true;
+  // Only send the continue signal. Do not call init() and do not send the old COMPLETE event,
+  // because some parent pages may treat COMPLETE as a command to reload/restart this minigame.
+  try { window.parent.postMessage({type:'NORAMINIGAME_CONTINUE'}, '*'); } catch(e) {}
+  try { window.dispatchEvent(new CustomEvent('NORAMINIGAME_CONTINUE')); } catch(e) {}
+  const btn=document.getElementById('ov_btn');
+  btn.disabled=true;
+  btn.textContent='Continuing...';
 }
 
 const speed=()=>pollen;
@@ -216,40 +347,122 @@ function uiUpdate(){
 }
 
 function endGame(){
-  try { window.parent.postMessage({type:'NORAMINIGAME_COMPLETE'}, '*'); } catch(e) {}
   document.getElementById('ov').classList.add('on');
   document.getElementById('b_t').textContent='🌟 Mission Complete!';
   document.getElementById('b_b').innerHTML=`
     <p>Pollen 10/10 &nbsp;·&nbsp; Total steps ${steps}</p>
-    <p class="q">Great job! Norah's bee found every flower through the rocks and branches.</p>
+    <p class="q">Great job! Nora's bee found every flower through the seeds and rocks.</p>
   `;
+  const btn=document.getElementById('ov_btn');
+  btn.textContent='Continue';
+  btn.onclick=continueNext;
 }
 
-function drawTapHint(pulse){
-  if(!showTapHint || anim || steps>0)return;
-  const target=DIRS.map(([dq,dr])=>({q:bee.q+dq,r:bee.r+dr}))
-    .find(pos=>cells.has(K(pos.q,pos.r))&&cells.get(K(pos.q,pos.r))==='E');
+function getGuideTarget(){
+  if(!showTapHint || !pollenPos || steps>0)return null;
+  let best=null,bestScore=Infinity;
+  for(const[dq,dr]of DIRS){
+    const q=bee.q+dq,r=bee.r+dr,k=K(q,r);
+    if(!cells.has(k)||cells.get(k)!=='E')continue;
+    // Pick the clickable glowing neighbor that brings the bee closest to the flower.
+    // BFS distance respects rocks/branches; pixel distance is only a fallback/tie-breaker.
+    const pathDist=bfs(q,r,pollenPos.q,pollenPos.r);
+    const pixelDist=Math.hypot(hp(q,r).x-hp(pollenPos.q,pollenPos.r).x,hp(q,r).y-hp(pollenPos.q,pollenPos.r).y);
+    const score=(pathDist>=999?9990:pathDist*1000)+pixelDist;
+    if(score<bestScore){bestScore=score;best={q,r};}
+  }
+  return best;
+}
+
+function guideLabelBox(x,y,w,h){
+  const margin=18;
+  const ui=document.getElementById('ui');
+  const uiRect=ui.getBoundingClientRect();
+  const canvasRect=cv.getBoundingClientRect();
+  const uiBox={
+    left:(uiRect.left-canvasRect.left)*(W/canvasRect.width)-10,
+    right:(uiRect.right-canvasRect.left)*(W/canvasRect.width)+10,
+    top:(uiRect.top-canvasRect.top)*(H/canvasRect.height)-10,
+    bottom:(uiRect.bottom-canvasRect.top)*(H/canvasRect.height)+10
+  };
+  const candidates=[
+    {x:x+w*.36,y:y-SZ*.98-h/2},
+    {x:x+w*.36,y:y+SZ*.98+h/2},
+    {x:x-w*.72,y:y},
+    {x:x+w*.72,y:y},
+    {x:W/2,y:Math.min(H-margin-h/2,y+SZ*1.45+h/2)}
+  ];
+  const overlaps=(b)=>!(b.right<uiBox.left||b.left>uiBox.right||b.bottom<uiBox.top||b.top>uiBox.bottom);
+  for(const c of candidates){
+    const cx=Math.max(margin+w/2,Math.min(W-margin-w/2,c.x));
+    const cy=Math.max(margin+h/2,Math.min(H-margin-h/2,c.y));
+    const box={left:cx-w/2,right:cx+w/2,top:cy-h/2,bottom:cy+h/2};
+    if(!overlaps(box))return {x:cx,y:cy};
+  }
+  return {x:Math.max(margin+w/2,Math.min(W-margin-w/2,x)),y:Math.max(margin+h/2,Math.min(H-margin-h/2,y+SZ*1.35+h/2))};
+}
+
+function drawGuideOverlay(pulse){
+  const target=getGuideTarget();
   if(!target)return;
   const{x,y}=hp(target.q,target.r);
-  const text='Tap here';
+
   ctx.save();
-  ctx.font='bold 22px Georgia, serif';
+  ctx.beginPath();
+  ctx.rect(0,0,W,H);
+  for(let i=0;i<6;i++){
+    const a=Math.PI/3*i-Math.PI/6;
+    const px=x+SZ*1.14*Math.cos(a),py=y+SZ*1.14*Math.sin(a);
+    i?ctx.lineTo(px,py):ctx.moveTo(px,py);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(0,0,0,.66)';
+  ctx.fill('evenodd');
+  ctx.restore();
+
+  ctx.save();
+  poly(target.q,target.r,1.03);
+  ctx.fillStyle=`rgba(255,224,74,${0.32+pulse*0.18})`;
+  ctx.fill();
+  poly(target.q,target.r,1.08);
+  ctx.strokeStyle=`rgba(255,246,160,${0.92+pulse*0.08})`;
+  ctx.lineWidth=5;
+  ctx.shadowColor='rgba(255,220,70,.95)';
+  ctx.shadowBlur=24;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x,y,SZ*.18+pulse*SZ*.05,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,190,.9)';
+  ctx.fill();
+  ctx.restore();
+
+  const text='Tap a glowing hex';
+  ctx.save();
+  ctx.font=`bold ${Math.max(18, Math.min(24, SZ*.52))}px Georgia, serif`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
-  const padX=18,w=ctx.measureText(text).width+padX*2,h=34;
-  const bx=x-w/2,by=y-h/2;
-  ctx.shadowColor='rgba(0,0,0,.55)';
-  ctx.shadowBlur=12;
-  ctx.fillStyle=`rgba(255,232,120,${0.86+pulse*.12})`;
+  const padX=18,w=ctx.measureText(text).width+padX*2,h=38;
+  const pos=guideLabelBox(x,y,w,h);
+  ctx.shadowColor='rgba(0,0,0,.7)';
+  ctx.shadowBlur=14;
+  ctx.fillStyle='rgba(255,236,132,.96)';
   ctx.beginPath();
-  ctx.roundRect(bx,by,w,h,17);
+  ctx.roundRect(pos.x-w/2,pos.y-h/2,w,h,18);
   ctx.fill();
   ctx.shadowBlur=0;
-  ctx.strokeStyle='rgba(86,45,0,.85)';
+  ctx.strokeStyle='rgba(70,36,0,.9)';
   ctx.lineWidth=2;
   ctx.stroke();
   ctx.fillStyle='#2b1500';
-  ctx.fillText(text,x,y+1);
+  ctx.fillText(text,pos.x,pos.y+1);
+
+  ctx.strokeStyle='rgba(255,236,132,.95)';
+  ctx.lineWidth=3;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(pos.x, pos.y + (pos.y<y ? h/2-2 : -h/2+2));
+  ctx.lineTo(x, y);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -314,8 +527,6 @@ function render(){
       ctx.beginPath();ctx.arc(x,y,SZ*.13+pulse*SZ*.04,0,Math.PI*2);ctx.fill();
     }
   }
-  drawTapHint(pulse);
-
   if(pollenPos){
     const{x,y}=hp(pollenPos.q,pollenPos.r);
     const g=ctx.createRadialGradient(x,y,2,x,y,SZ*.9);
@@ -331,19 +542,12 @@ function render(){
   if(anim){ctx.rotate(Math.sin(performance.now()/80)*0.08)}
   ctx.font=`${SZ*1.05}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.shadowColor='#ffd040';ctx.shadowBlur=18;ctx.fillText('🐝',0,0);ctx.restore();ctx.shadowBlur=0;
+
+  drawGuideOverlay(pulse);
 }
 
-// Arrow keys + WASD + QE → all 6 pointy-top hex directions
-document.addEventListener('keydown',e=>{
-  const m={
-    ArrowRight:[1,0], ArrowLeft:[-1,0],
-    ArrowUp:[1,-1],   ArrowDown:[-1,1],
-    d:[1,0], a:[-1,0], w:[0,-1], s:[0,1], q:[-1,1], e:[1,-1]
-  };
-  if(m[e.key]){e.preventDefault();move(...m[e.key])}
-});
-
-cv.addEventListener('click',e=>{
+cv.addEventListener('pointerdown',e=>{
+  if(!gameStarted)return;
   const rc=cv.getBoundingClientRect();
   const mx=(e.clientX-rc.left)*(W/rc.width),my=(e.clientY-rc.top)*(H/rc.height);
   let best=null,bd=SZ*1.4;
@@ -355,35 +559,26 @@ cv.addEventListener('click',e=>{
   }
   if(best){
     const dq=best.q-bee.q,dr=best.r-bee.r;
-    if(DIRS.some(([a,b])=>a===dq&&b===dr))move(dq,dr);
+    if(!DIRS.some(([a,b])=>a===dq&&b===dr))return;
+    if(showTapHint){
+      const target=getGuideTarget();
+      if(!target || best.q!==target.q || best.r!==target.r)return;
+    }
+    move(dq,dr);
   }
 });
 
 function loop(){
-  if(!anim)render();
+  if(!gameStarted){
+    drawHoneycombBackground();
+  }else if(!anim){
+    render();
+  }
   requestAnimationFrame(loop);
 }
-init();
 requestAnimationFrame(loop);
 </script>
 
-<script>
-(function(){
-  let vSkipCount = 0;
-  let vSkipTimer = null;
-  window.addEventListener('keydown', function(e){
-    if ((e.key || '').toLowerCase() !== 'v') return;
-    vSkipCount += 1;
-    clearTimeout(vSkipTimer);
-    vSkipTimer = setTimeout(function(){ vSkipCount = 0; }, 1400);
-    if (vSkipCount >= 4) {
-      vSkipCount = 0;
-      clearTimeout(vSkipTimer);
-      try { window.parent.postMessage({type:'MINIGAME_SKIP_VVVV'}, '*'); } catch(err) {}
-    }
-  });
-})();
-</script>
 
 </body>
 </html>

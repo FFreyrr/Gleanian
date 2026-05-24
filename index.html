@@ -229,12 +229,7 @@
     opacity:0;
     pointer-events:none;
   }
-  .app.cover-page main {
-    display:block;
-  }
   .app.cover-page .media-card {
-    width:100%;
-    height:100%;
     overflow:hidden;
     cursor:var(--cursor-bee);
   }
@@ -244,13 +239,8 @@
     object-fit:contain;
   }
   .app.cover-page .story-card {
-    position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
-    padding:0;
-    background:transparent;
-    pointer-events:auto;
+    background:#000;
+    pointer-events:none;
   }
   .app.cover-page .content,
   .app.cover-page .choices,
@@ -759,6 +749,12 @@ function initializeCoverNodes() {
   insertBefore('efe686d7-8ebd-421e-80ea-5f80e095dd99', 'cover-elowen', 'Elowen Cover', coverAssets.elowen);
 
   applyCover(GAME.nodes['1384c04b-b235-4cc6-9274-5f17d1e1bf15'], 'Chapter 4 Cover', coverAssets.chapter4);
+
+  Object.values(coverAssets).forEach(src => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+  });
 }
 initializeCoverNodes();
 
@@ -1027,7 +1023,7 @@ function renderMedia(node) {
   if (isNorahMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
-    frame.src = 'assets/NORAMINIGAME.html?v=nora-tap-hint-1';
+    frame.src = 'assets/NORAMINIGAME.html?v=nora-replace-1';
     frame.title = 'Norah mini game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     media.appendChild(frame);
@@ -1036,7 +1032,7 @@ function renderMedia(node) {
   if (isPaulMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
-    frame.src = 'assets/PAUL_MINIGAME.html?v=fit-2';
+    frame.src = 'assets/PAUL_MINIGAME.html?v=paul-replace-1';
     frame.title = 'Paul mini game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     media.appendChild(frame);
@@ -1106,6 +1102,11 @@ function renderMedia(node) {
     updateCaptionBoundsFromAspect();
   } else {
     const img = document.createElement('img');
+    if (node.coverPage) {
+      img.loading = 'eager';
+      img.decoding = 'sync';
+      img.fetchPriority = 'high';
+    }
     img.src = src;
     img.alt = strip(node.title) || 'Scene image';
     img.addEventListener('load', () => updateCaptionBoundsFromAspect());
@@ -1369,7 +1370,7 @@ window.addEventListener('message', e => {
     skipCurrentMiniGame();
     return;
   }
-  if (e.data.type === 'NORAMINIGAME_COMPLETE' && isNorahMiniGame(node)) {
+  if ((e.data.type === 'NORAMINIGAME_COMPLETE' || e.data.type === 'NORAMINIGAME_CONTINUE') && isNorahMiniGame(node)) {
     completedMinigames.add(node.id);
     setSkipButtonVisible(false);
     renderChoices(node);
