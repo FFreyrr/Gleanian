@@ -313,6 +313,9 @@
     cursor:var(--cursor-flower);
     transition:opacity .55s ease, transform .55s ease;
   }
+  .app.paul-theme .story-card {
+    padding-top:76px;
+  }
   .story-card.can-continue { cursor:var(--cursor-bee); }
   .story-card.fade-out { opacity:0; transform:translateY(8px); }
   .story-card.fade-in { animation: softAppear .8s ease both; }
@@ -574,6 +577,7 @@
     :root { --game-w:96vw; --game-h:86vh; }
     header { opacity:.85; }
     .story-card { padding:14px 0 12px; }
+    .app.paul-theme .story-card { padding-top:52px; }
     :root { --story-font-size:20pt; }
     .choices { grid-template-columns:1fr; }
     .admin-grid { grid-template-columns:1fr; }
