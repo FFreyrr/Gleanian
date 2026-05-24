@@ -98,6 +98,7 @@
   }
   .media-card {
     position:relative;
+    z-index:11;
     width:100%;
     height:100%;
     border:0;
@@ -150,6 +151,38 @@
     box-shadow:-16px 12px 24px rgba(0,0,0,.46);
     transform:rotate(-18deg);
     opacity:.98;
+  }
+  .app.has-media-decor .media-card::after { content:none; }
+  .media-decor {
+    position:absolute;
+    z-index:12;
+    right:calc(var(--caption-left) - 18px);
+    bottom:-34px;
+    pointer-events:none;
+    user-select:none;
+    filter:drop-shadow(0 14px 18px rgba(0,0,0,.4));
+  }
+  .media-decor.honeycomb {
+    width:min(150px, 12vw);
+    min-width:92px;
+  }
+  .media-card img.media-decor {
+    height:auto;
+    max-height:none;
+    object-fit:contain;
+    background:transparent;
+  }
+  .media-card img.media-decor.honeycomb {
+    width:min(150px, 12vw);
+  }
+  .media-decor.feather {
+    width:min(230px, 18vw);
+    min-width:118px;
+    right:calc(var(--caption-left) + 18px);
+    bottom:-48px;
+  }
+  .media-card img.media-decor.feather {
+    width:min(230px, 18vw);
   }
   .video-toggle {
     position:absolute;
@@ -298,7 +331,10 @@
     letter-spacing:0;
   }
   .content p { margin:0 0 .45em; }
-  .content em { color:rgba(255,255,255,.78); }
+  .content em {
+    color:rgba(255,255,255,.86);
+    font-style:normal;
+  }
   .app.choice-page .content em {
     font-style:normal;
     color:rgba(255,255,255,.86);
@@ -343,7 +379,7 @@
   }
   .choice {
     position:relative;
-    overflow:hidden;
+    overflow:visible;
     width:100%;
     text-align:left;
     min-height:90px;
@@ -680,6 +716,15 @@ function isAnyMiniGame(node) {
 function isFullscreenMiniGame(node) {
   return isPaulMiniGame(node);
 }
+function isNoraIntroNode(node) {
+  return normalizedTitle(node) === 'NORA INTRO VIDEO';
+}
+function isPaulIntroNode(node) {
+  return normalizedTitle(node) === 'PAUL INTRO VIDEO';
+}
+function isEshuStartNode(node) {
+  return /(^|\b)eshu(\b|$)/i.test(`${node?.titleText || ''} ${strip(node?.title || '')} ${strip(node?.content || '')} ${node?.media?.src || ''}`);
+}
 const NODE_CHAPTER_THEME = (() => {
   const themeById = {};
   const visit = (seedIds, theme, shouldStop) => {
@@ -697,9 +742,9 @@ const NODE_CHAPTER_THEME = (() => {
       });
     }
   };
-  const paulMini = Object.values(GAME.nodes).find(isPaulMiniGame);
-  visit([GAME.start], 'nora', isPaulMiniGame);
-  visit((paulMini?.outputs || []).map(out => out.target), 'paul', isFinalMiniGame);
+  const nodes = Object.values(GAME.nodes);
+  visit(nodes.filter(isNoraIntroNode).map(node => node.id), 'nora', isPaulIntroNode);
+  visit(nodes.filter(isPaulIntroNode).map(node => node.id), 'paul', node => isEshuStartNode(node) || isFinalMiniGame(node));
   return themeById;
 })();
 function nodeSearchText(node) {
@@ -726,7 +771,23 @@ function isChoicePage(node) {
 }
 function hasDecoratedMedia(node) {
   if (!node?.media?.src || isAnyMiniGame(node)) return false;
+  if (!NODE_CHAPTER_THEME[node.id]) return false;
   return node.media.type === 'image' || node.media.type === 'video' || !!googleDrivePreviewSrc(node.media.src);
+}
+function appendMediaDecor(node) {
+  if (!hasDecoratedMedia(node)) return;
+  const theme = chapterThemeForNode(node);
+  const img = document.createElement('img');
+  img.className = `media-decor ${theme === 'paul' ? 'feather' : 'honeycomb'}`;
+  img.src = theme === 'paul' ? 'assets/feather-decor.png' : 'assets/honeycomb-decor.png';
+  img.alt = '';
+  img.setAttribute('aria-hidden', 'true');
+  media.appendChild(img);
+}
+function shouldShowVideoToggle(node) {
+  const text = `${node?.titleText || ''} ${node?.media?.src || ''}`.toLowerCase();
+  if (/\.gif($|[?#])/.test(text) || /\bgif\b/.test(text)) return false;
+  return !/(harry asking for help alone|nora helping harry|nora approaching harry)/.test(text);
 }
 
 function resetCaptionBounds() {
@@ -887,6 +948,7 @@ function renderMedia(node) {
     frame.setAttribute('allow', 'autoplay; fullscreen');
     frame.setAttribute('allowfullscreen', '');
     media.appendChild(frame);
+    appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
     return;
   }
@@ -899,23 +961,26 @@ function renderMedia(node) {
     };
     if (node.media.loop) v.loop = true;
     if (node.media.controls) v.controls = true;
-    const toggle = document.createElement('button');
-    toggle.className = 'video-toggle';
-    toggle.type = 'button';
-    const updateToggle = () => { toggle.textContent = v.paused ? 'Play' : 'Pause'; };
-    toggle.addEventListener('click', event => {
-      event.stopPropagation();
-      if (v.paused) v.play().catch(()=>{});
-      else v.pause();
-      updateToggle();
-    });
-    v.addEventListener('play', updateToggle);
-    v.addEventListener('pause', updateToggle);
-    v.addEventListener('ended', updateToggle);
-    if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
     media.appendChild(v);
-    media.appendChild(toggle);
-    updateToggle();
+    if (shouldShowVideoToggle(node)) {
+      const toggle = document.createElement('button');
+      toggle.className = 'video-toggle';
+      toggle.type = 'button';
+      const updateToggle = () => { toggle.textContent = v.paused ? 'Play' : 'Pause'; };
+      toggle.addEventListener('click', event => {
+        event.stopPropagation();
+        if (v.paused) v.play().catch(()=>{});
+        else v.pause();
+        updateToggle();
+      });
+      v.addEventListener('play', updateToggle);
+      v.addEventListener('pause', updateToggle);
+      v.addEventListener('ended', updateToggle);
+      media.appendChild(toggle);
+      updateToggle();
+    }
+    if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
+    appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
   } else {
     const img = document.createElement('img');
@@ -923,6 +988,7 @@ function renderMedia(node) {
     img.alt = strip(node.title) || 'Scene image';
     img.addEventListener('load', () => updateCaptionBoundsFromAspect());
     media.appendChild(img);
+    appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
   }
 }
