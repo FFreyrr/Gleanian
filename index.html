@@ -838,6 +838,80 @@ function cleanTitle(text) {
     .replace(/^convo\s*/i, '')
     .trim();
 }
+function splitLongStoryNodes() {
+  const maxChars = 460;
+  const nodeIds = [
+    'c1d4833d-a469-4c20-9fc7-85cb3ad826ba',
+    'c4c4d371-b690-415e-9b91-f47ac392c1bd',
+    'd3ee8944-df39-47b0-baa4-776270fd5fc2',
+    'efe686d7-8ebd-421e-80ea-5f80e095dd99',
+    '18729602-ef4f-4cbd-af7e-5d9d3472ada5',
+    '23ea189e-d8ea-44e2-a7df-85c6759015a1'
+  ];
+  const textLength = html => strip(html).length;
+  const splitParagraph = paragraph => {
+    if (textLength(paragraph) <= maxChars) return [paragraph];
+    const inner = paragraph.replace(/^<p[^>]*>/i, '').replace(/<\/p>$/i, '');
+    const openEm = /^\s*<em>/i.test(inner);
+    const closeEm = /<\/em>\s*$/i.test(inner);
+    const plainInner = inner.replace(/^<em>/i, '').replace(/<\/em>$/i, '');
+    const sentences = plainInner.match(/[^.!?。！？]+[.!?。！？]?/g) || [plainInner];
+    const chunks = [];
+    let current = '';
+    sentences.forEach(sentence => {
+      if (strip(current + sentence).length > maxChars && current.trim()) {
+        chunks.push(current.trim());
+        current = sentence;
+      } else {
+        current += sentence;
+      }
+    });
+    if (current.trim()) chunks.push(current.trim());
+    return chunks.map(chunk => `<p>${openEm ? '<em>' : ''}${chunk}${closeEm ? '</em>' : ''}</p>`);
+  };
+  const chunkContent = html => {
+    const paragraphs = (html || '').match(/<p[\s\S]*?<\/p>/gi) || [html || '<p></p>'];
+    const units = paragraphs.flatMap(splitParagraph);
+    const chunks = [];
+    let current = [];
+    units.forEach(unit => {
+      const candidate = current.concat(unit).join('');
+      if (current.length && textLength(candidate) > maxChars) {
+        chunks.push(current.join(''));
+        current = [unit];
+      } else {
+        current.push(unit);
+      }
+    });
+    if (current.length) chunks.push(current.join(''));
+    return chunks;
+  };
+  nodeIds.forEach(id => {
+    const node = GAME.nodes[id];
+    if (!node || node.storySplitApplied) return;
+    const chunks = chunkContent(node.content);
+    if (chunks.length < 2) return;
+    const originalOutputs = node.outputs || [];
+    node.content = chunks[0];
+    node.outputs = [{ id: `${id}-split-output-1`, label: '', target: `${id}-split-2`, targetType: 'elements' }];
+    node.storySplitApplied = true;
+    for (let i = 1; i < chunks.length; i += 1) {
+      const splitId = `${id}-split-${i + 1}`;
+      const nextId = i === chunks.length - 1 ? null : `${id}-split-${i + 2}`;
+      GAME.nodes[splitId] = {
+        ...node,
+        id: splitId,
+        title: node.title,
+        titleText: node.titleText,
+        content: chunks[i],
+        media: node.media ? { ...node.media } : null,
+        outputs: nextId ? [{ id: `${id}-split-output-${i + 1}`, label: '', target: nextId, targetType: 'elements' }] : originalOutputs,
+        storySplitApplied: true
+      };
+    }
+  });
+}
+splitLongStoryNodes();
 function encodeSrc(src) {
   if (/^https?:\/\//i.test(src)) return src;
   return src.split('/').map((part,i)=> i===0 ? part : encodeURIComponent(part)).join('/');
