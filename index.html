@@ -33,8 +33,10 @@
     --game-h:min(1200px, 94vh);
     --caption-left:0px;
     --caption-width:100%;
-    --story-font-size:20px;
+    --story-font-size:20pt;
     --story-line-height:1.42;
+    --cursor-bee:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cellipse cx='18' cy='17' rx='8' ry='6' fill='%23ffc84d' stroke='%23110f0b' stroke-width='1.5'/%3E%3Cpath d='M14 12v10M18 11v12M22 13v8' stroke='%23110f0b' stroke-width='2'/%3E%3Ccircle cx='10' cy='17' r='4' fill='%23110f0b'/%3E%3Ccircle cx='23' cy='10' r='5' fill='%23dff7ff' fill-opacity='.85' stroke='%23110f0b' stroke-width='1'/%3E%3Ccircle cx='19' cy='8' r='5' fill='%23dff7ff' fill-opacity='.65' stroke='%23110f0b' stroke-width='1'/%3E%3Cpath d='M7 14 3 10M7 20 3 24' stroke='%23110f0b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") 6 6, pointer;
+    --cursor-flower:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cpath d='M16 18v10' stroke='%234ea24f' stroke-width='2.2' stroke-linecap='round'/%3E%3Cellipse cx='16' cy='11' rx='4' ry='7' fill='%23ff8bb8'/%3E%3Cellipse cx='16' cy='21' rx='4' ry='7' fill='%23ff8bb8'/%3E%3Cellipse cx='8' cy='16' rx='7' ry='4' fill='%23ff8bb8'/%3E%3Cellipse cx='24' cy='16' rx='7' ry='4' fill='%23ff8bb8'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ffd25a' stroke='%23110f0b' stroke-width='1'/%3E%3C/svg%3E") 6 6, default;
   }
   * { box-sizing:border-box; }
   html, body { width:100%; height:100%; margin:0; }
@@ -47,6 +49,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    cursor:var(--cursor-flower);
   }
   body::before { display:none; }
   .app {
@@ -105,6 +108,7 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    cursor:var(--cursor-flower);
   }
   .media-card img,
   .media-card video {
@@ -114,6 +118,26 @@
     object-fit:contain;
     display:block;
     background:#000;
+  }
+  .video-toggle {
+    position:absolute;
+    z-index:8;
+    left:50%;
+    bottom:18px;
+    transform:translateX(-50%);
+    min-width:92px;
+    color:#111;
+    background:rgba(255,196,80,.95);
+    border:1px solid rgba(255,255,255,.7);
+    border-radius:999px;
+    padding:9px 18px;
+    font-weight:700;
+    box-shadow:0 10px 24px rgba(0,0,0,.42);
+    cursor:pointer;
+  }
+  .video-toggle:hover {
+    background:#ffd47a;
+    transform:translate(-50%, -1px);
   }
 
   .mini-iframe {
@@ -221,9 +245,10 @@
     padding:18px 0 14px;
     display:flex;
     flex-direction:column;
-    cursor:pointer;
+    cursor:var(--cursor-flower);
     transition:opacity .55s ease, transform .55s ease;
   }
+  .story-card.can-continue { cursor:var(--cursor-bee); }
   .story-card.fade-out { opacity:0; transform:translateY(8px); }
   .story-card.fade-in { animation: softAppear .8s ease both; }
   @keyframes softAppear {
@@ -238,10 +263,25 @@
     line-height:var(--story-line-height);
     flex:0 0 auto;
     color:rgba(255,255,255,.86);
-    letter-spacing:.01em;
+    letter-spacing:0;
   }
   .content p { margin:0 0 .45em; }
   .content em { color:rgba(255,255,255,.78); }
+  .speaker {
+    font-weight:700;
+  }
+  .speaker.nora { color:#ffd45d; }
+  .speaker.jenny { color:#ffe28a; }
+  .speaker.terra { color:#e8b947; }
+  .speaker.linda { color:#f7c958; }
+  .speaker.eloween { color:#ffdf78; }
+  .speaker.xylia { color:#f1c35d; }
+  .speaker.paul { color:#7eb8ff; }
+  .speaker.harry { color:#9fd0ff; }
+  .speaker.john { color:#65a3f2; }
+  .speaker.saul { color:#4f86d8; }
+  .speaker.eshu { color:#3f72c8; }
+  .speaker.elegua { color:#8cc4ff; }
   .continue-dot {
     display:inline-block;
     width:.62em;
@@ -434,7 +474,7 @@
     :root { --game-w:96vw; --game-h:86vh; }
     header { opacity:.85; }
     .story-card { padding:14px 0 12px; }
-    :root { --story-font-size:20px; }
+    :root { --story-font-size:20pt; }
     .choices { grid-template-columns:1fr; }
     .admin-grid { grid-template-columns:1fr; }
     .admin-panel { max-height:72%; }
@@ -489,7 +529,7 @@
       <div class="admin-group">
         <div class="admin-label">Story Text</div>
         <div class="admin-control">
-          <span>Font Size</span><span class="admin-value" id="fontSizeValue">20px</span>
+          <span>Font Size</span><span class="admin-value" id="fontSizeValue">20pt</span>
           <input id="fontSizeRange" type="range" min="16" max="52" step="1" value="20">
         </div>
         <div class="admin-control">
@@ -611,10 +651,7 @@ function updateCaptionBoundsFromMedia(el) {
   requestAnimationFrame(fitStoryText);
 }
 window.addEventListener('resize', () => {
-  const el = media.querySelector('img, video');
-  if (el) updateCaptionBoundsFromMedia(el);
-  else updateCaptionBoundsFromAspect();
-  fitStoryText();
+  updateCaptionBoundsFromAspect();
 });
 
 function titleScreenText(node) {
@@ -628,6 +665,48 @@ function titleScreenText(node) {
 }
 function escapeHTML(s) {
   return String(s || '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+}
+const SPEAKER_CLASSES = {
+  Nora: 'nora',
+  Jenny: 'jenny',
+  Terra: 'terra',
+  Linda: 'linda',
+  Eloween: 'eloween',
+  Xylia: 'xylia',
+  Paul: 'paul',
+  Harry: 'harry',
+  John: 'john',
+  Saul: 'saul',
+  Eshu: 'eshu',
+  Elegua: 'elegua'
+};
+function formatDialogueHTML(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html || '<p></p>';
+  const names = Object.keys(SPEAKER_CLASSES).join('|');
+  const speakerPattern = new RegExp(`\\b(${names}):`, 'g');
+  const walker = document.createTreeWalker(template.content, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(textNode => {
+    const text = textNode.nodeValue;
+    if (!speakerPattern.test(text)) return;
+    speakerPattern.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let last = 0;
+    text.replace(speakerPattern, (match, name, offset) => {
+      if (offset > last) frag.appendChild(document.createTextNode(text.slice(last, offset)));
+      const span = document.createElement('span');
+      span.className = `speaker ${SPEAKER_CLASSES[name]}`;
+      span.textContent = match;
+      frag.appendChild(span);
+      last = offset + match.length;
+      return match;
+    });
+    if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+    textNode.parentNode.replaceChild(frag, textNode);
+  });
+  return template.innerHTML;
 }
 function go(id, push=true) {
   if (!id) return;
@@ -649,7 +728,7 @@ function showBranch(branchId) {
 }
 function renderMedia(node) {
   media.innerHTML = '';
-  resetCaptionBounds();
+  updateCaptionBoundsFromAspect();
   if (isNorahMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
@@ -708,23 +787,37 @@ function renderMedia(node) {
     };
     if (node.media.loop) v.loop = true;
     if (node.media.controls) v.controls = true;
-    v.addEventListener('loadedmetadata', () => updateCaptionBoundsFromMedia(v));
-    v.addEventListener('loadeddata', () => updateCaptionBoundsFromMedia(v));
+    const toggle = document.createElement('button');
+    toggle.className = 'video-toggle';
+    toggle.type = 'button';
+    const updateToggle = () => { toggle.textContent = v.paused ? 'Play' : 'Pause'; };
+    toggle.addEventListener('click', event => {
+      event.stopPropagation();
+      if (v.paused) v.play().catch(()=>{});
+      else v.pause();
+      updateToggle();
+    });
+    v.addEventListener('play', updateToggle);
+    v.addEventListener('pause', updateToggle);
+    v.addEventListener('ended', updateToggle);
     if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
     media.appendChild(v);
-    updateCaptionBoundsFromMedia(v);
+    media.appendChild(toggle);
+    updateToggle();
+    updateCaptionBoundsFromAspect();
   } else {
     const img = document.createElement('img');
     img.src = src;
     img.alt = strip(node.title) || 'Scene image';
-    img.addEventListener('load', () => updateCaptionBoundsFromMedia(img));
+    img.addEventListener('load', () => updateCaptionBoundsFromAspect());
     media.appendChild(img);
-    updateCaptionBoundsFromMedia(img);
+    updateCaptionBoundsFromAspect();
   }
 }
 function renderChoices(node) {
   choicesEl.innerHTML = '';
   activeAutoOutput = null;
+  document.querySelector('.story-card').classList.remove('can-continue');
   branchBox.classList.remove('active');
   endBox.style.display = node.outputs.length ? 'none' : 'block';
 
@@ -732,6 +825,7 @@ function renderChoices(node) {
     if (completedMinigames.has(node.id)) {
       contentEl.innerHTML = '<p class="complete-note">Mission complete. Click here to continue.</p>';
       activeAutoOutput = node.outputs[0] || null;
+      document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
       const dot = document.createElement('span');
       dot.className = 'continue-dot';
       dot.title = 'Click to continue';
@@ -745,6 +839,7 @@ function renderChoices(node) {
     if (completedMinigames.has(node.id)) {
       contentEl.innerHTML = '<p class="complete-note">Mission complete. Click here to continue.</p>';
       activeAutoOutput = node.outputs[0] || null;
+      document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
       const dot = document.createElement('span');
       dot.className = 'continue-dot';
       dot.title = 'Click to continue';
@@ -761,6 +856,7 @@ function renderChoices(node) {
 
   if (node.outputs.length === 1 && !strip(node.outputs[0].label)) {
     activeAutoOutput = node.outputs[0];
+    document.querySelector('.story-card').classList.add('can-continue');
     const dot = document.createElement('span');
     dot.className = 'continue-dot';
     dot.title = 'Click to continue';
@@ -820,11 +916,12 @@ const adminNodeList = Object.values(GAME.nodes).map((node, index) => {
   };
 });
 function applyAdminStyle() {
-  document.documentElement.style.setProperty('--story-font-size', adminState.fontSize + 'px');
+  adminState.fontSize = 20;
+  document.documentElement.style.setProperty('--story-font-size', '20pt');
   document.documentElement.style.setProperty('--story-line-height', adminState.lineHeight);
   fontSizeRange.value = adminState.fontSize;
   lineHeightRange.value = adminState.lineHeight;
-  fontSizeValue.textContent = adminState.fontSize + 'px';
+  fontSizeValue.textContent = adminState.fontSize + 'pt';
   lineHeightValue.textContent = adminState.lineHeight.toFixed(2);
   fitStoryText();
 }
@@ -862,22 +959,9 @@ function setSkipButtonVisible(show) {
 }
 
 function fitStoryText() {
-  const card = document.querySelector('.story-card');
   contentEl.style.fontSize = '';
   contentEl.style.lineHeight = '';
   choicesEl.style.gap = '';
-  const base = parseFloat(getComputedStyle(contentEl).fontSize) || 16;
-  const baseLine = parseFloat(getComputedStyle(contentEl).lineHeight) / base || adminState.lineHeight;
-  let size = base;
-  let line = baseLine;
-  let tries = 0;
-  while (card.scrollHeight > card.clientHeight && size > 11 && tries < 12) {
-    size -= 0.6;
-    line = Math.max(1.22, line - 0.018);
-    contentEl.style.fontSize = size + 'px';
-    contentEl.style.lineHeight = line;
-    tries++;
-  }
 }
 
 function render() {
@@ -892,7 +976,7 @@ function render() {
   appEl.classList.toggle('minigame', isFullscreenMiniGame(node));
   appEl.classList.toggle('final-minigame', isFinalMiniGame(node));
   setSkipButtonVisible(false);
-  contentEl.innerHTML = node.content || '<p></p>';
+  contentEl.innerHTML = formatDialogueHTML(node.content || '<p></p>');
   renderMedia(node); renderChoices(node); renderHistory(); fitStoryText();
   if (adminPanel.classList.contains('active')) renderNodeOptions();
 }
