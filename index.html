@@ -800,6 +800,7 @@ let visitedTitles = [];
 let activeAutoOutput = null;
 let isTransitioning = false;
 const completedMinigames = new Set();
+let companionLosses = { nora: false, paul: false };
 
 const projectName = document.getElementById('projectName');
 const meta = document.getElementById('meta');
@@ -1040,7 +1041,47 @@ function go(id, push=true) {
   currentId = id;
   render();
 }
+function applyChoiceConsequences(out) {
+  const label = strip(out.label || '').toLowerCase();
+  if (
+    out.id === 'bfba2823-b5b1-4158-be46-2e38bfc22326' ||
+    /ignore the situation and continue the assigned tasks/.test(label) ||
+    /surely somebody else will help him soon/.test(label)
+  ) {
+    companionLosses.nora = true;
+  }
+  if (
+    out.id === '7ef22834-bf31-45a1-ae4d-abc0003157ab' ||
+    /assume nora misunderstood the situation/.test(label)
+  ) {
+    companionLosses.paul = true;
+  }
+}
+function finalBattleState() {
+  return {
+    acquiredCompanions: {
+      harry: true,
+      paul: true,
+      elegua: true,
+      terra: true,
+      elowen: true,
+      nora: true
+    },
+    lostCompanions: { ...companionLosses }
+  };
+}
+function sendFinalBattleState(frame) {
+  const state = finalBattleState();
+  try {
+    if (frame.contentWindow?.setFinalBattleState) frame.contentWindow.setFinalBattleState(state);
+    else if (frame.contentWindow?.setAcquiredCompanions) frame.contentWindow.setAcquiredCompanions(state.acquiredCompanions, state.lostCompanions);
+    frame.contentWindow?.postMessage({ type: 'GLEANIAN_FINAL_BATTLE_STATE', payload: state }, '*');
+  } catch (error) {
+    console.warn('Unable to send final battle state', error);
+  }
+}
 function resolveOutput(out) {
+  applyChoiceConsequences(out);
   if (out.targetType === 'branches') return showBranch(out.target);
   go(out.target);
 }
@@ -1076,9 +1117,11 @@ function renderMedia(node) {
   if (isFinalMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
-    frame.src = 'assets/FINAL_GAME.html?v=fit-1';
+    const lostQuery = Object.entries(companionLosses).filter(([, lost]) => lost).map(([id]) => id).join(',');
+    frame.src = `assets/FINAL_GAME.html?v=final-battle-1${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
     frame.title = 'Final game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
+    frame.addEventListener('load', () => sendFinalBattleState(frame));
     media.appendChild(frame);
     return;
   }
@@ -1334,7 +1377,7 @@ function render() {
   if (adminPanel.classList.contains('active')) renderNodeOptions();
 }
 
-document.getElementById('restartBtn').onclick = () => { currentId=GAME.start; stack=[]; visitedTitles=[]; render(); };
+document.getElementById('restartBtn').onclick = () => { currentId=GAME.start; stack=[]; visitedTitles=[]; companionLosses={ nora:false, paul:false }; render(); };
 document.getElementById('backBtn').onclick = () => { const prev=stack.pop(); if (prev) { currentId=prev; render(); } };
 document.getElementById('historyBtn').onclick = () => historyPanel.classList.toggle('active');
 document.querySelector('.story-card').addEventListener('click', autoContinue);
@@ -1435,6 +1478,10 @@ window.addEventListener('message', e => {
   if (e.data.type === 'FINAL_GAME_COMPLETE' && isFinalMiniGame(node)) {
     setSkipButtonVisible(false);
     completeFinalGame(!!e.data.success);
+  }
+  if (e.data.type === 'forestQuestComplete' && isFinalMiniGame(node)) {
+    setSkipButtonVisible(false);
+    completeFinalGame(!!e.data.payload?.success);
   }
 });
 render();
