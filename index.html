@@ -238,6 +238,33 @@
     height:100%;
     object-fit:contain;
   }
+  .cover-action {
+    position:absolute;
+    z-index:14;
+    left:50%;
+    top:50%;
+    transform:translate(-50%, -50%);
+    min-width:min(360px, 74vw);
+    padding:18px 34px 19px;
+    color:#fff;
+    font-size:clamp(25px, 2.5vw, 42px);
+    font-weight:800;
+    letter-spacing:0;
+    border:1px solid rgba(255,255,255,.55);
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(255,255,255,.26), rgba(255,255,255,.09));
+    box-shadow:0 20px 54px rgba(0,0,0,.42), inset 0 1px 0 rgba(255,255,255,.48);
+    backdrop-filter:blur(16px) saturate(1.35);
+    text-shadow:0 2px 12px rgba(0,0,0,.45);
+    cursor:var(--cursor-bee);
+  }
+  .cover-action:hover {
+    transform:translate(-50%, -53%) scale(1.03);
+    background:linear-gradient(135deg, rgba(255,255,255,.34), rgba(255,255,255,.14));
+  }
+  .cover-action:active {
+    transform:translate(-50%, -50%) scale(.99);
+  }
   .app.cover-page .story-card {
     background:#000;
     pointer-events:none;
@@ -684,6 +711,12 @@ function initializeCoverNodes() {
     chapter4: 'assets/covers/chapter-4-cover.png'
   };
   const outputTo = target => [{ id: `cover-output-${target}`, label: '', target, targetType: 'elements' }];
+  const coverActionLabel = titleText => {
+    const title = titleText.replace(/\s*Cover\s*$/i, '').trim();
+    if (/^game$/i.test(title)) return 'Start';
+    if (/^chapter\s+\d+/i.test(title)) return `Enter ${title.replace(/\bchapter\b/i, 'Chapter')}`;
+    return `Play as ${title}`;
+  };
   const applyCover = (node, titleText, src, target) => {
     if (!node) return;
     node.title = `<p>${titleText}</p>`;
@@ -691,6 +724,7 @@ function initializeCoverNodes() {
     node.content = '';
     node.media = { type: 'image', src, autoplay: false, loop: false, controls: false };
     node.coverPage = true;
+    node.coverActionLabel = coverActionLabel(titleText);
     if (target) node.outputs = outputTo(target);
   };
   const createCover = (id, titleText, src, target) => {
@@ -703,6 +737,7 @@ function initializeCoverNodes() {
       media: { type: 'image', src, autoplay: false, loop: false, controls: false },
       outputs: outputTo(target),
       coverPage: true,
+      coverActionLabel: coverActionLabel(titleText),
       coverTheme
     };
   };
@@ -1111,6 +1146,17 @@ function renderMedia(node) {
     img.alt = strip(node.title) || 'Scene image';
     img.addEventListener('load', () => updateCaptionBoundsFromAspect());
     media.appendChild(img);
+    if (node.coverPage) {
+      const btn = document.createElement('button');
+      btn.className = 'cover-action';
+      btn.type = 'button';
+      btn.textContent = node.coverActionLabel || 'Start';
+      btn.addEventListener('click', event => {
+        event.stopPropagation();
+        autoContinue();
+      });
+      media.appendChild(btn);
+    }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
   }
