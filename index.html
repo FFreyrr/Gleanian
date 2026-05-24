@@ -1287,13 +1287,9 @@ function renderChoices(node) {
 
   if (isNorahMiniGame(node)) {
     if (completedMinigames.has(node.id)) {
-      contentEl.innerHTML = '<p class="complete-note">Mission complete. Click here to continue.</p>';
+      contentEl.innerHTML = '';
       activeAutoOutput = node.outputs[0] || null;
       document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
-      const dot = document.createElement('span');
-      dot.className = 'continue-dot';
-      dot.title = 'Click to continue';
-      contentEl.appendChild(dot);
     } else {
       contentEl.innerHTML = '<p class="locked-note">Complete Norah’s mini game first. The next scene will unlock after collecting 10 pollen.</p>';
     }
@@ -1301,13 +1297,9 @@ function renderChoices(node) {
   }
   if (isPaulMiniGame(node)) {
     if (completedMinigames.has(node.id)) {
-      contentEl.innerHTML = '<p class="complete-note">Mission complete. Click here to continue.</p>';
+      contentEl.innerHTML = '';
       activeAutoOutput = node.outputs[0] || null;
       document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
-      const dot = document.createElement('span');
-      dot.className = 'continue-dot';
-      dot.title = 'Click to continue';
-      contentEl.appendChild(dot);
     } else {
       contentEl.innerHTML = '<p class="locked-note">Complete Paul’s mini game first. The next scene will unlock after finishing the task matching.</p>';
     }
@@ -1500,14 +1492,24 @@ function completeFinalGame(success) {
   }
   if (out) resolveOutput(out);
 }
+function completeInlineMiniGame(node) {
+  if (!node || !isAnyMiniGame(node)) return;
+  completedMinigames.add(node.id);
+  setSkipButtonVisible(false);
+  const out = node.outputs[0];
+  if (out) {
+    transitionTo(() => resolveOutput(out));
+    return;
+  }
+  renderChoices(node);
+  fitStoryText();
+}
 function skipCurrentMiniGame() {
   const node = GAME.nodes[currentId];
   if (!node || !isAnyMiniGame(node) || completedMinigames.has(node.id)) return;
   setSkipButtonVisible(false);
   if (isFinalMiniGame(node)) { completeFinalGame(true); return; }
-  completedMinigames.add(node.id);
-  renderChoices(node);
-  fitStoryText();
+  completeInlineMiniGame(node);
 }
 function registerVSkipPress() {
   const node = GAME.nodes[currentId];
@@ -1534,20 +1536,12 @@ window.addEventListener('message', e => {
     return;
   }
   if ((e.data.type === 'NORAMINIGAME_COMPLETE' || e.data.type === 'NORAMINIGAME_CONTINUE') && isNorahMiniGame(node)) {
-    completedMinigames.add(node.id);
-    setSkipButtonVisible(false);
-    renderChoices(node);
-    fitStoryText();
+    completeInlineMiniGame(node);
+    return;
   }
-  if (e.data.type === 'PAUL_MINIGAME_COMPLETE' && isPaulMiniGame(node)) {
-    completedMinigames.add(node.id);
-    setSkipButtonVisible(false);
-    if (node.outputs[0]) {
-      transitionTo(() => resolveOutput(node.outputs[0]));
-    } else {
-      renderChoices(node);
-      fitStoryText();
-    }
+  if ((e.data.type === 'PAUL_MINIGAME_COMPLETE' || e.data.type === 'PAUL_MINIGAME_CONTINUE') && isPaulMiniGame(node)) {
+    completeInlineMiniGame(node);
+    return;
   }
   if (e.data.type === 'FINAL_GAME_COMPLETE' && isFinalMiniGame(node)) {
     setSkipButtonVisible(false);
