@@ -92,7 +92,7 @@
     width:100%;
     height:100%;
     display:grid;
-    grid-template-rows:68% 32%;
+    grid-template-rows:70% 30%;
     position:relative;
     background:#000;
   }
@@ -104,7 +104,7 @@
     border:0;
     border-radius:0;
     box-shadow:none;
-    overflow:hidden;
+    overflow:visible;
     background:#000;
     display:flex;
     align-items:center;
@@ -156,15 +156,15 @@
   .media-decor {
     position:absolute;
     z-index:12;
-    right:calc(var(--caption-left) - 18px);
-    bottom:-34px;
+    right:calc(var(--caption-left) - 8px);
+    bottom:-18px;
     pointer-events:none;
     user-select:none;
     filter:drop-shadow(0 14px 18px rgba(0,0,0,.4));
   }
   .media-decor.honeycomb {
-    width:min(150px, 12vw);
-    min-width:92px;
+    width:min(174px, 13.5vw);
+    min-width:112px;
   }
   .media-card img.media-decor {
     height:auto;
@@ -173,13 +173,13 @@
     background:transparent;
   }
   .media-card img.media-decor.honeycomb {
-    width:min(150px, 12vw);
+    width:min(174px, 13.5vw);
   }
   .media-decor.feather {
     width:min(230px, 18vw);
     min-width:118px;
-    right:calc(var(--caption-left) + 18px);
-    bottom:-48px;
+    right:calc(var(--caption-left) - 6px);
+    bottom:-66px;
   }
   .media-card img.media-decor.feather {
     width:min(230px, 18vw);
@@ -723,7 +723,7 @@ function isPaulIntroNode(node) {
   return normalizedTitle(node) === 'PAUL INTRO VIDEO';
 }
 function isEshuStartNode(node) {
-  return /(^|\b)eshu(\b|$)/i.test(`${node?.titleText || ''} ${strip(node?.title || '')} ${strip(node?.content || '')} ${node?.media?.src || ''}`);
+  return /(^|\b)eshu(\b|$)/i.test(`${node?.titleText || ''} ${strip(node?.title || '')} ${node?.media?.src || ''}`);
 }
 const NODE_CHAPTER_THEME = (() => {
   const themeById = {};
@@ -743,8 +743,12 @@ const NODE_CHAPTER_THEME = (() => {
     }
   };
   const nodes = Object.values(GAME.nodes);
+  const paulMini = nodes.find(isPaulMiniGame);
   visit(nodes.filter(isNoraIntroNode).map(node => node.id), 'nora', isPaulIntroNode);
-  visit(nodes.filter(isPaulIntroNode).map(node => node.id), 'paul', node => isEshuStartNode(node) || isFinalMiniGame(node));
+  visit([
+    ...nodes.filter(isPaulIntroNode).map(node => node.id),
+    ...(paulMini?.outputs || []).map(out => out.target)
+  ], 'paul', node => isEshuStartNode(node) || isFinalMiniGame(node));
   return themeById;
 })();
 function nodeSearchText(node) {
