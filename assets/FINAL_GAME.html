@@ -24,11 +24,11 @@
     font-family: Inter, "Segoe UI", Arial, sans-serif;
     background: #172113; color: var(--text); user-select: none;
   }
-  body { display: flex; align-items: center; justify-content: center; padding: min(2vw, 18px); }
+  body { display: flex; align-items: stretch; justify-content: stretch; padding: 0; }
   .shell {
-    position: relative; width: min(1480px, 100%); height: min(94vh, 930px);
-    border-radius: 28px; overflow: hidden; background: #172113;
-    box-shadow: 0 30px 90px rgba(0,0,0,.38);
+    position: relative; width: 100vw; height: 100vh;
+    border-radius: 0; overflow: hidden; background: #172113;
+    box-shadow: none;
   }
   .screen { position:absolute; inset:0; opacity:0; pointer-events:none; transition:.32s ease; }
   .screen.active { opacity:1; pointer-events:auto; }

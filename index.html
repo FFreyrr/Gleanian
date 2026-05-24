@@ -217,7 +217,7 @@
     height:min(1250px, 98vh);
   }
   .app.minigame header,
-  .app.minigame .admin-toggle {
+  .app.minigame .admin-toggle:not(.active) {
     opacity:0;
     pointer-events:none;
   }
@@ -503,6 +503,7 @@
     z-index:45;
     right:18px;
     bottom:18px;
+    display:none;
     color:#111;
     background:rgba(255,196,80,.95);
     border:1px solid rgba(255,255,255,.42);
@@ -511,6 +512,7 @@
     font-weight:700;
     box-shadow:0 10px 28px rgba(0,0,0,.42);
   }
+  .admin-toggle.active { display:block; }
   .admin-toggle:hover { transform:translateY(-2px); background:#ffd47a; }
   .admin-panel {
     position:absolute;
@@ -1199,7 +1201,7 @@ function renderMedia(node) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
     const lostQuery = Object.entries(companionLosses).filter(([, lost]) => lost).map(([id]) => id).join(',');
-    frame.src = `assets/FINAL_GAME.html?v=final-battle-1${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
+    frame.src = `assets/FINAL_GAME.html?v=final-battle-2${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
     frame.title = 'Final game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     frame.addEventListener('load', () => sendFinalBattleState(frame));
@@ -1409,6 +1411,24 @@ function toggleAdminPanel(force) {
   adminToggle.textContent = open ? 'Close Admin' : 'Admin';
   if (open) renderNodeOptions();
 }
+let adminButtonVisible = false;
+let vAdminCount = 0;
+let vAdminTimer = null;
+function setAdminButtonVisible(show) {
+  adminButtonVisible = !!show;
+  adminToggle.classList.toggle('active', adminButtonVisible);
+  if (!adminButtonVisible) toggleAdminPanel(false);
+}
+function registerAdminShortcutPress() {
+  vAdminCount += 1;
+  clearTimeout(vAdminTimer);
+  vAdminTimer = setTimeout(() => { vAdminCount = 0; }, 1400);
+  if (vAdminCount >= 4) {
+    vAdminCount = 0;
+    clearTimeout(vAdminTimer);
+    setAdminButtonVisible(!adminButtonVisible);
+  }
+}
 function jumpToAdminNode() {
   const target = nodeJumpSelect.value;
   if (!target || !GAME.nodes[target]) return;
@@ -1531,7 +1551,10 @@ function registerVSkipPress() {
   }
 }
 window.addEventListener('keydown', e => {
-  if ((e.key || '').toLowerCase() === 'v') registerVSkipPress();
+  if ((e.key || '').toLowerCase() === 'v') {
+    registerAdminShortcutPress();
+    registerVSkipPress();
+  }
   if (e.key==='ArrowRight') { if (activeAutoOutput) autoContinue(); else if (choicesEl.children.length===1) choicesEl.children[0].click(); }
   if (e.key==='ArrowLeft') document.getElementById('backBtn').click();
 });
