@@ -29,8 +29,8 @@
     --muted:rgba(255,255,255,.72);
     --line:rgba(255,255,255,.28);
     --shadow:rgba(0,0,0,.65);
-    --game-w:min(1840px, 96vw);
-    --game-h:min(1200px, 94vh);
+    --game-w:1840px;
+    --game-h:1200px;
     --caption-left:0px;
     --caption-width:100%;
     --story-font-size:20pt;
@@ -41,17 +41,23 @@
   * { box-sizing:border-box; }
   html, body { width:100%; height:100%; margin:0; }
   body {
-    min-height:100vh;
+    min-width:var(--game-w);
+    min-height:var(--game-h);
     font-family: 'Sculpin', Arial, sans-serif;
     color:var(--ink);
     background:#000;
-    overflow:hidden;
+    overflow:auto;
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:var(--cursor-flower);
   }
   body::before { display:none; }
+  body.final-minigame-body {
+    min-width:100vw;
+    min-height:100vh;
+    overflow:hidden;
+  }
   .app {
     position:relative;
     width:var(--game-w);
@@ -213,8 +219,8 @@
     background:#000;
   }
   .app.minigame {
-    width:min(2020px, 99vw);
-    height:min(1250px, 98vh);
+    width:2020px;
+    height:1250px;
   }
   .app.minigame header,
   .app.minigame .admin-toggle:not(.active) {
@@ -1457,6 +1463,7 @@ function render() {
   titleEl.textContent = plainTitle;
   const appEl = document.querySelector('.app');
   const theme = chapterThemeForNode(node);
+  document.body.classList.toggle('final-minigame-body', isFinalMiniGame(node));
   appEl.classList.toggle('minigame', isFullscreenMiniGame(node));
   appEl.classList.toggle('final-minigame', isFinalMiniGame(node));
   appEl.classList.toggle('nora-theme', theme === 'nora');
