@@ -310,7 +310,7 @@
   .app.cover-page .media-card img {
     width:100%;
     height:100%;
-    object-fit:contain;
+    object-fit:cover;
   }
   .cover-action {
     position:absolute;
@@ -449,13 +449,12 @@
     overflow-x:hidden;
     overscroll-behavior:contain;
     scrollbar-gutter:stable;
-    border:0;
-    border-radius:0;
-    box-shadow:none;
-    background:
-      url("assets/ui/textframe-arrows.svg") center / 132% 100% no-repeat;
+    border:2px solid rgba(166,142,131,.5);
+    border-radius:clamp(34px, 4vw, 62px);
+    box-shadow:0 10px 20px rgba(62,52,41,.22), inset 0 1px 0 rgba(255,255,255,.74);
+    background:rgba(246,238,226,.96);
     backdrop-filter:none;
-    padding:clamp(34px, 4.4vh, 58px) clamp(34px, 3.1vw, 52px) clamp(52px, 6vh, 86px);
+    padding:clamp(30px, 3.7vh, 46px) clamp(44px, 3.6vw, 64px) clamp(66px, 7.4vh, 96px);
     display:flex;
     flex-direction:column;
     cursor:var(--cursor-flower);
@@ -463,26 +462,7 @@
   }
   .story-card.can-continue { cursor:var(--cursor-bee); }
   .story-card.has-choices {
-    background:
-      url("assets/ui/textframe-arrows.svg") center / 132% 100% no-repeat;
-  }
-  .story-card.has-choices::before,
-  .story-card.has-choices::after {
-    content:"";
-    position:absolute;
-    z-index:0;
-    bottom:clamp(28px, 4vh, 52px);
-    width:clamp(106px, 9vw, 170px);
-    height:clamp(58px, 7vh, 92px);
-    background:#f5eee5;
-    border-radius:999px;
-    pointer-events:none;
-  }
-  .story-card.has-choices::before {
-    left:clamp(34px, 5vw, 82px);
-  }
-  .story-card.has-choices::after {
-    right:clamp(34px, 5vw, 82px);
+    padding-bottom:clamp(30px, 3.7vh, 46px);
   }
   .story-card.fade-out { opacity:0; transform:translateY(8px); }
   .story-card.fade-in { animation: softAppear .8s ease both; }
@@ -510,7 +490,7 @@
     font-size:var(--story-font-size);
     line-height:var(--story-line-height);
     flex:0 0 auto;
-    padding:0 clamp(8px, .8vw, 16px);
+    padding:0;
     color:#17110b;
     letter-spacing:0;
   }
@@ -563,7 +543,7 @@
     gap:14px;
     margin-top:14px;
     flex:0 0 auto;
-    padding:0 clamp(8px, .8vw, 16px) 4px;
+    padding:0 0 4px;
     padding-bottom:4px;
   }
   .app.choice-page .content {
@@ -620,28 +600,37 @@
   .story-nav {
     position:absolute;
     z-index:16;
-    bottom:clamp(26px, 4vh, 52px);
+    bottom:clamp(20px, 3.2vh, 38px);
     width:clamp(92px, 8vw, 150px);
     height:clamp(54px, 6.5vh, 86px);
     border:0;
     border-radius:999px;
     margin:0;
     padding:0;
+    color:#8b5b12;
     background:transparent;
     box-shadow:none;
-    opacity:.02;
+    opacity:1;
+    display:grid;
+    place-items:center;
+    font-size:clamp(42px, 5vw, 78px);
+    line-height:1;
+    text-shadow:0 2px 0 #b66d11, 0 6px 12px rgba(58,38,9,.34);
   }
+  .story-nav::before { display:block; }
+  .story-nav.prev::before { content:"←"; }
+  .story-nav.next::before { content:"→"; }
   .story-nav:hover,
   .story-nav:focus-visible {
-    opacity:.12;
-    background:rgba(255,196,80,.45);
+    color:#b97915;
+    background:rgba(255,196,80,.18);
     outline:none;
   }
   .story-nav.prev {
-    left:clamp(36px, 5vw, 86px);
+    left:clamp(26px, 4.2vw, 70px);
   }
   .story-nav.next {
-    right:clamp(36px, 5vw, 86px);
+    right:clamp(26px, 4.2vw, 70px);
   }
   .story-card:not(.can-go-back) .story-nav.prev,
   .story-card:not(.can-continue) .story-nav.next,
@@ -1050,7 +1039,7 @@ function cleanTitle(text) {
     .trim();
 }
 function splitLongStoryNodes() {
-  const maxChars = 300;
+  const maxChars = 260;
   const textLength = html => strip(html).length;
   const splitParagraph = paragraph => {
     if (textLength(paragraph) <= maxChars) return [paragraph];
@@ -1723,9 +1712,23 @@ function setSkipButtonVisible(show) {
 }
 
 function fitStoryText() {
-  contentEl.style.fontSize = '';
-  contentEl.style.lineHeight = '';
+  const storyCard = document.querySelector('.story-card');
+  storyCard.style.removeProperty('--story-font-size');
+  storyCard.style.removeProperty('--story-line-height');
   choicesEl.style.gap = '';
+  if (storyCard.offsetParent === null || storyCard.classList.contains('has-choices') && !choicesEl.children.length) return;
+  const baseSize = Number(adminState?.fontSize || 20);
+  const minSize = 12;
+  let size = baseSize;
+  let lineHeight = Number(adminState?.lineHeight || 1.42);
+  const fits = () => storyCard.scrollHeight <= storyCard.clientHeight + 2 && storyCard.scrollWidth <= storyCard.clientWidth + 2;
+  while (!fits() && size > minSize) {
+    size -= 1;
+    if (size <= 15) lineHeight = Math.max(1.22, lineHeight - .03);
+    storyCard.style.setProperty('--story-font-size', `${size}pt`);
+    storyCard.style.setProperty('--story-line-height', lineHeight.toFixed(2));
+    choicesEl.style.gap = size <= 15 ? '9px' : '';
+  }
 }
 function resetStoryScroll() {
   document.querySelector('.story-card').scrollTop = 0;
