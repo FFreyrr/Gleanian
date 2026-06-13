@@ -323,6 +323,22 @@
     max-width:min(760px, 92%);
     margin:0 auto;
   }
+  .app.intro-video main {
+    display:block;
+    width:100%;
+    height:100%;
+  }
+  .app.intro-video .media-card {
+    width:100%;
+    height:100%;
+    overflow:hidden;
+  }
+  .app.intro-video .media-card video {
+    object-fit:cover;
+  }
+  .app.intro-video .story-card {
+    display:none;
+  }
   .locked-note {
     color:rgba(255,255,255,.62);
     font-size:.92em;
@@ -969,6 +985,10 @@ function isPaulMiniGame(node) {
 function isFinalMiniGame(node) {
   return normalizedTitle(node) === 'FINAL GAME';
 }
+function isIntroVideoNode(node) {
+  const title = normalizedTitle(node);
+  return node?.media?.type === 'video' && (title === 'INTRODUCTION' || title === 'NORA INTRO VIDEO');
+}
 function isAnyMiniGame(node) {
   return isNorahMiniGame(node) || isPaulMiniGame(node) || isFinalMiniGame(node);
 }
@@ -1504,6 +1524,7 @@ function render() {
   document.body.classList.toggle('minigame-body', isAnyMiniGame(node));
   appEl.classList.toggle('minigame', isFullscreenMiniGame(node));
   appEl.classList.toggle('final-minigame', isFinalMiniGame(node));
+  appEl.classList.toggle('intro-video', isIntroVideoNode(node));
   appEl.classList.toggle('nora-theme', theme === 'nora');
   appEl.classList.toggle('paul-theme', theme === 'paul');
   appEl.classList.toggle('choice-page', isChoicePage(node));
