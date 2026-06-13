@@ -114,7 +114,7 @@
     width:100%;
     height:100%;
     max-height:none;
-    object-fit:cover;
+    object-fit:contain;
     display:block;
     background:#eadfce;
   }
@@ -244,6 +244,7 @@
     border:0;
     background:transparent;
     padding:0;
+    overflow:hidden;
     transform-origin:center;
     opacity:.34;
     filter:grayscale(1) saturate(.28) contrast(.9);
@@ -258,8 +259,12 @@
     width:100%;
     height:auto;
     display:block;
+    margin-top:-15%;
     pointer-events:none;
     user-select:none;
+  }
+  .app:not(.cover-page):not(.minigame):not(.intro-video) header {
+    display:none;
   }
   .app.minigame {
     width:100vw;
@@ -302,7 +307,7 @@
   .app.cover-page .media-card img {
     width:100%;
     height:100%;
-    object-fit:cover;
+    object-fit:contain;
   }
   .cover-action {
     position:absolute;
@@ -445,7 +450,7 @@
     border-radius:0;
     box-shadow:none;
     background:
-      url("assets/ui/textframe-arrows.svg") center / 100% 100% no-repeat;
+      url("assets/ui/textframe-arrows.svg") center / 116% 100% no-repeat;
     backdrop-filter:none;
     padding:clamp(34px, 4.4vh, 58px) clamp(48px, 4.8vw, 76px) clamp(52px, 6vh, 86px);
     display:flex;
@@ -454,6 +459,28 @@
     transition:opacity .55s ease, transform .55s ease;
   }
   .story-card.can-continue { cursor:var(--cursor-bee); }
+  .story-card.has-choices {
+    background:
+      url("assets/ui/textframe-arrows.svg") center / 116% 100% no-repeat;
+  }
+  .story-card.has-choices::before,
+  .story-card.has-choices::after {
+    content:"";
+    position:absolute;
+    z-index:0;
+    bottom:clamp(28px, 4vh, 52px);
+    width:clamp(106px, 9vw, 170px);
+    height:clamp(58px, 7vh, 92px);
+    background:#f5eee5;
+    border-radius:999px;
+    pointer-events:none;
+  }
+  .story-card.has-choices::before {
+    left:clamp(34px, 5vw, 82px);
+  }
+  .story-card.has-choices::after {
+    right:clamp(34px, 5vw, 82px);
+  }
   .story-card.fade-out { opacity:0; transform:translateY(8px); }
   .story-card.fade-in { animation: softAppear .8s ease both; }
   .story-card::-webkit-scrollbar {
@@ -473,6 +500,8 @@
   }
   .node-title { display:none; }
   .content {
+    position:relative;
+    z-index:1;
     width:100%;
     margin-left:0;
     font-size:var(--story-font-size);
@@ -522,6 +551,8 @@
     50% { opacity:1; transform:scale(1); }
   }
   .choices {
+    position:relative;
+    z-index:1;
     width:100%;
     margin-left:0;
     display:grid;
@@ -583,6 +614,38 @@
   .branch-box { display:none; gap:10px; flex-direction:column; margin-top:10px; padding:10px; border:1px dashed rgba(255,255,255,.35); border-radius:18px; background:transparent; }
   .branch-box.active { display:flex; }
   .branch-box h3 { margin:0; color:#fff; }
+  .story-nav {
+    position:absolute;
+    z-index:16;
+    bottom:clamp(26px, 4vh, 52px);
+    width:clamp(92px, 8vw, 150px);
+    height:clamp(54px, 6.5vh, 86px);
+    border:0;
+    border-radius:999px;
+    margin:0;
+    padding:0;
+    background:transparent;
+    box-shadow:none;
+    opacity:.02;
+  }
+  .story-nav:hover,
+  .story-nav:focus-visible {
+    opacity:.12;
+    background:rgba(255,196,80,.45);
+    outline:none;
+  }
+  .story-nav.prev {
+    left:clamp(36px, 5vw, 86px);
+  }
+  .story-nav.next {
+    right:clamp(36px, 5vw, 86px);
+  }
+  .story-card:not(.can-go-back) .story-nav.prev,
+  .story-card:not(.can-continue) .story-nav.next,
+  .story-card.has-choices .story-nav.prev,
+  .story-card.has-choices .story-nav.next {
+    display:none;
+  }
   .history {
     position:fixed;
     z-index:30;
@@ -796,6 +859,8 @@
       </section>
       <div class="choices" id="choices"></div>
       <div class="end" id="endBox" style="display:none;">The story ends here.</div>
+      <button class="story-nav prev" id="storyPrevBtn" type="button" aria-label="Previous scene"></button>
+      <button class="story-nav next" id="storyNextBtn" type="button" aria-label="Next scene"></button>
     </section>
   </main>
   <section class="history" id="historyPanel"><strong>Visited scenes</strong><ol id="historyList"></ol></section>
@@ -956,6 +1021,8 @@ const historyList = document.getElementById('historyList');
 const adminToggle = document.getElementById('adminToggle');
 const adminPanel = document.getElementById('adminPanel');
 const adminCloseBtn = document.getElementById('adminCloseBtn');
+const storyPrevBtn = document.getElementById('storyPrevBtn');
+const storyNextBtn = document.getElementById('storyNextBtn');
 const nodeSearch = document.getElementById('nodeSearch');
 const nodeJumpSelect = document.getElementById('nodeJumpSelect');
 const nodeJumpBtn = document.getElementById('nodeJumpBtn');
@@ -1504,7 +1571,8 @@ function renderMedia(node) {
 function renderChoices(node) {
   choicesEl.innerHTML = '';
   activeAutoOutput = null;
-  document.querySelector('.story-card').classList.remove('can-continue');
+  const storyCard = document.querySelector('.story-card');
+  storyCard.classList.remove('can-continue', 'has-choices');
   branchBox.classList.remove('active');
   endBox.style.display = node.outputs.length ? 'none' : 'block';
 
@@ -1512,7 +1580,7 @@ function renderChoices(node) {
     if (completedMinigames.has(node.id)) {
       contentEl.innerHTML = '';
       activeAutoOutput = node.outputs[0] || null;
-      document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
+      storyCard.classList.toggle('can-continue', !!activeAutoOutput);
     } else {
       contentEl.innerHTML = '<p class="locked-note">Complete Norah’s mini game first. The next scene will unlock after collecting 10 pollen.</p>';
     }
@@ -1522,7 +1590,7 @@ function renderChoices(node) {
     if (completedMinigames.has(node.id)) {
       contentEl.innerHTML = '';
       activeAutoOutput = node.outputs[0] || null;
-      document.querySelector('.story-card').classList.toggle('can-continue', !!activeAutoOutput);
+      storyCard.classList.toggle('can-continue', !!activeAutoOutput);
     } else {
       contentEl.innerHTML = '<p class="locked-note">Complete Paul’s mini game first. The next scene will unlock after finishing the task matching.</p>';
     }
@@ -1535,14 +1603,11 @@ function renderChoices(node) {
 
   if (node.outputs.length === 1 && !strip(node.outputs[0].label)) {
     activeAutoOutput = node.outputs[0];
-    document.querySelector('.story-card').classList.add('can-continue');
-    const dot = document.createElement('span');
-    dot.className = 'continue-dot';
-    dot.title = 'Click to continue';
-    contentEl.appendChild(dot);
+    storyCard.classList.add('can-continue');
     return;
   }
 
+  if (node.outputs.length > 0) storyCard.classList.add('has-choices');
   node.outputs.forEach((out, i) => {
     const btn = document.createElement('button'); btn.className='choice';
     btn.innerHTML = formatDialogueHTML(out.label || `<p>Choice ${i+1}</p>`);
@@ -1685,6 +1750,7 @@ function render() {
   appEl.classList.toggle('choice-page', isChoicePage(node));
   appEl.classList.toggle('has-media-decor', hasDecoratedMedia(node));
   appEl.classList.toggle('cover-page', !!node.coverPage);
+  document.querySelector('.story-card').classList.toggle('can-go-back', stack.length > 0);
   setSkipButtonVisible(false);
   contentEl.innerHTML = formatDialogueHTML(node.content || '<p></p>');
   renderCharacterRail(node);
@@ -1695,8 +1761,9 @@ function render() {
 
 document.getElementById('restartBtn').onclick = () => { currentId=GAME.start; stack=[]; visitedTitles=[]; companionLosses={ nora:false, paul:false }; render(); };
 document.getElementById('backBtn').onclick = () => { const prev=stack.pop(); if (prev) { currentId=prev; render(); } };
+storyPrevBtn.onclick = (event) => { event.stopPropagation(); document.getElementById('backBtn').click(); };
+storyNextBtn.onclick = (event) => { event.stopPropagation(); autoContinue(); };
 document.getElementById('historyBtn').onclick = () => historyPanel.classList.toggle('active');
-document.querySelector('.story-card').addEventListener('click', autoContinue);
 media.addEventListener('click', () => {
   if (document.querySelector('.app').classList.contains('cover-page')) autoContinue();
 });
