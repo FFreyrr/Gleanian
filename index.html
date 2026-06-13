@@ -442,10 +442,12 @@
     z-index:10;
     grid-column:1;
     grid-row:2;
-    width:100%;
+    justify-self:start;
+    width:var(--caption-width);
+    margin-left:var(--caption-left);
     height:100%;
     min-height:0;
-    overflow-y:auto;
+    overflow:hidden;
     overflow-x:hidden;
     overscroll-behavior:contain;
     scrollbar-gutter:stable;
@@ -607,27 +609,24 @@
     border-radius:999px;
     margin:0;
     padding:0;
-    color:#8b5b12;
-    background:transparent;
+    color:transparent;
+    background:url("assets/ui/story-arrow.png") center / contain no-repeat;
     box-shadow:none;
     opacity:1;
     display:grid;
     place-items:center;
     font-size:clamp(42px, 5vw, 78px);
     line-height:1;
-    text-shadow:0 2px 0 #b66d11, 0 6px 12px rgba(58,38,9,.34);
+    text-shadow:none;
   }
-  .story-nav::before { display:block; }
-  .story-nav.prev::before { content:"←"; }
-  .story-nav.next::before { content:"→"; }
   .story-nav:hover,
   .story-nav:focus-visible {
-    color:#b97915;
-    background:rgba(255,196,80,.18);
+    filter:brightness(1.08);
     outline:none;
   }
   .story-nav.prev {
     left:clamp(26px, 4.2vw, 70px);
+    transform:scaleX(-1);
   }
   .story-nav.next {
     right:clamp(26px, 4.2vw, 70px);
@@ -1310,14 +1309,6 @@ const CHARACTER_AVATARS = {
   xylia: 'Xilia.svg',
   honilia: 'Honilia.svg'
 };
-const CHAPTER_CASTS = {
-  nora: ['nora', 'jenny', 'harry', 'paul'],
-  paul: ['paul', 'harry', 'nora', 'john', 'saul', 'linda', 'eshu'],
-  terra: ['terra', 'harry', 'soila', 'antalia', 'saul'],
-  elegua: ['elegua', 'eloween', 'eshu', 'woodpeckers'],
-  eloween: ['eloween', 'elegua', 'eshu', 'woodpeckers'],
-  final: ['nora', 'harry', 'paul', 'terra', 'elegua', 'eloween', 'xylia', 'eshu', 'woodpeckers']
-};
 function characterKeyFromName(name) {
   return SPEAKER_CLASSES[name] || SPEAKER_CLASSES[name?.replace(/\s+/g, '')] || '';
 }
@@ -1332,16 +1323,40 @@ function speakersInHTML(html) {
   }
   return found;
 }
-function characterCastForNode(node, activeSpeakers) {
+function chapterKeyForNode(node) {
   const text = nodeSearchText(node);
   const title = normalizedTitle(node).toLowerCase();
-  let cast = CHAPTER_CASTS.nora;
-  if (isFinalMiniGame(node) || /final|chapter 4|good ending|bad ending|woodpecker|termite|xylia|xilia/.test(`${title} ${text}`)) cast = CHAPTER_CASTS.final;
-  else if (/terra|ant queen|antalia|soila|soil|termite/.test(`${title} ${text}`)) cast = CHAPTER_CASTS.terra;
-  else if (/eloween|elowen/.test(`${title} ${text}`)) cast = CHAPTER_CASTS.eloween;
-  else if (/elegua|eshu|council|woodpecker/.test(`${title} ${text}`)) cast = CHAPTER_CASTS.elegua;
-  else if (chapterThemeForNode(node) === 'paul') cast = CHAPTER_CASTS.paul;
-  const merged = [...cast];
+  const merged = `${title} ${text}`;
+  if (isFinalMiniGame(node) || /final|chapter 4|good ending|bad ending|woodpecker|termite|xylia|xilia/.test(merged)) return 'final';
+  if (/terra|ant queen|antalia|soila|soil/.test(merged)) return 'terra';
+  if (/eloween|elowen/.test(merged)) return 'eloween';
+  if (/elegua|eshu|council/.test(merged)) return 'elegua';
+  return chapterThemeForNode(node) === 'paul' ? 'paul' : 'nora';
+}
+const ACTUAL_CHAPTER_CASTS = (() => {
+  const buckets = {};
+  Object.values(GAME.nodes).forEach(node => {
+    if (!node || node.coverPage || isAnyMiniGame(node)) return;
+    const key = chapterKeyForNode(node);
+    if (!buckets[key]) buckets[key] = new Set();
+    speakersInHTML(node.content || '').forEach(speaker => buckets[key].add(speaker));
+  });
+  return Object.fromEntries(Object.entries(buckets).map(([key, set]) => [key, [...set].filter(speaker => CHARACTER_AVATARS[speaker])]));
+})();
+function charactersMentionedInNode(node) {
+  const text = `${strip(node?.title || '')} ${node?.titleText || ''} ${strip(node?.content || '')}`;
+  const found = new Set();
+  Object.entries(SPEAKER_CLASSES).forEach(([name, key]) => {
+    if (!CHARACTER_AVATARS[key]) return;
+    const pattern = new RegExp(`\\b${name}\\b`, 'i');
+    if (pattern.test(text)) found.add(key);
+  });
+  return found;
+}
+function characterCastForNode(node, activeSpeakers) {
+  const mentioned = charactersMentionedInNode(node);
+  const merged = [...new Set([...activeSpeakers, ...mentioned])];
+  if (!merged.length) (ACTUAL_CHAPTER_CASTS[chapterKeyForNode(node)] || []).forEach(key => merged.push(key));
   activeSpeakers.forEach(key => {
     if (!merged.includes(key)) merged.push(key);
   });
@@ -1530,6 +1545,7 @@ function renderMedia(node) {
       media.appendChild(toggle);
       updateToggle();
     }
+    v.addEventListener('loadedmetadata', () => updateCaptionBoundsFromMedia(v));
     if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
@@ -1542,7 +1558,7 @@ function renderMedia(node) {
     }
     img.src = encodeSrc(node.media.src);
     img.alt = strip(node.title) || 'Scene image';
-    img.addEventListener('load', () => updateCaptionBoundsFromAspect());
+    img.addEventListener('load', () => updateCaptionBoundsFromMedia(img));
     media.appendChild(img);
     if (node.coverPage) {
       const btn = document.createElement('button');
