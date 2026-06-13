@@ -16,7 +16,9 @@
     --red: #ffb1a5;
     --blue: #a6d8ff;
     --shadow: 0 18px 50px rgba(0,0,0,.32);
-    --sidebar-w: 330px;
+    --side-gap: 16px;
+    --sidebar-w: calc(50vw - var(--side-gap) * 1.5);
+    --sidebar-space: calc(var(--sidebar-w) + var(--side-gap) * 2);
   }
   * { box-sizing: border-box; }
   html, body {
@@ -56,9 +58,9 @@
   .btn:disabled { opacity:.48; cursor:not-allowed; transform:none; filter:none; }
   .btn.secondary { background: rgba(255,255,255,.12); color: var(--text); border:1px solid var(--line); box-shadow:none; }
   .game { z-index:2; background:#0d140c; }
-  #gameScreen .bg, #gameScreen .veil { right: 362px; }
+  #gameScreen .bg, #gameScreen .veil { right: var(--sidebar-space); }
   .hud {
-    position:absolute; top:16px; left:16px; right:380px; z-index:5;
+    position:absolute; top:16px; left:16px; right:var(--sidebar-space); z-index:5;
     display:flex; align-items:stretch; justify-content:space-between; gap:14px;
   }
   .panel {
@@ -71,7 +73,7 @@
   .status { min-width:170px; padding:13px 18px; text-align:center; flex:0 0 170px; }
   .status span { display:block; text-transform:uppercase; letter-spacing:.12em; color:rgba(255,255,255,.68); font-size:11px; margin-bottom:5px; }
   .status strong { font-size: clamp(28px,4vw,42px); line-height:1; }
-  .field { position:absolute; inset:0 362px 0 0; z-index:3; }
+  .field { position:absolute; inset:0 var(--sidebar-space) 0 0; z-index:3; }
   .slot {
     position:absolute; width: 168px; min-height: 136px;
     transform: translate(-50%, -50%);
@@ -99,37 +101,40 @@
   .slot .placeholder { font-size:34px; opacity:.50; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
   .placed {
     position:absolute; transform: translate(-50%, -50%);
-    width: 158px; height: 158px; pointer-events:none;
+    width: 158px; height: 158px; pointer-events:auto;
+    cursor:grab;
+    touch-action:none;
     filter: drop-shadow(0 16px 24px rgba(0,0,0,.35)); animation: pop .25s ease;
   }
   .placed img { width:100%; height:100%; object-fit:contain; }
+  .placed.dragging { opacity:.35; }
   .placed .tag {
     position:absolute; left:50%; bottom:-8px; transform:translateX(-50%);
     background: rgba(13,20,10,.76); border:1px solid rgba(255,255,255,.16);
     border-radius:999px; padding:4px 8px; font-size:11px; white-space:nowrap;
   }
   .side {
-    position:absolute; right:16px; top:16px; bottom:16px; width:330px; z-index:6;
-    padding:14px; display:flex; flex-direction:column; gap:12px;
+    position:absolute; right:var(--side-gap); top:16px; bottom:16px; width:var(--sidebar-w); z-index:6;
+    padding:clamp(18px, 2vw, 28px); display:flex; flex-direction:column; gap:18px;
     overflow:hidden;
   }
-  .side h3 { margin:0 0 4px; font-size:19px; }
-  .side p { margin:0; font-size:12px; }
-  .rules { padding:13px 14px; }
-  .rules ul { margin:8px 0 0 18px; padding:0; color:var(--muted); font-size:12px; line-height:1.42; }
-  .char-list { flex:1; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px; padding-right:2px; }
+  .side h3 { margin:0 0 8px; font-size:clamp(27px, 2.2vw, 40px); }
+  .side p { margin:0; font-size:clamp(16px, 1.15vw, 22px); }
+  .rules { padding:clamp(18px, 1.5vw, 26px); }
+  .rules ul { margin:14px 0 0 24px; padding:0; color:var(--muted); font-size:clamp(15px, 1vw, 19px); line-height:1.48; }
+  .char-list { flex:1; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding-right:6px; }
   .char {
-    position:relative; min-height:112px; border-radius:18px;
+    position:relative; min-height:clamp(150px, 15vh, 230px); border-radius:22px;
     background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    cursor:grab; touch-action:none; padding:8px 6px 7px;
+    cursor:grab; touch-action:none; padding:14px 10px 12px;
     transition:.16s ease;
   }
   .char:hover { background: rgba(255,255,255,.10); transform: translateY(-2px); }
   .char.dragging { opacity:.35; }
-  .char img { max-width:86px; max-height:72px; object-fit:contain; pointer-events:none; }
-  .char .name { font-weight:900; font-size:12px; margin-top:3px; }
-  .char .skill { font-size:11px; color:var(--gold); margin-top:2px; }
+  .char img { max-width:min(150px, 14vw); max-height:min(120px, 12vh); object-fit:contain; pointer-events:none; }
+  .char .name { font-weight:900; font-size:clamp(18px, 1.35vw, 25px); margin-top:8px; }
+  .char .skill { font-size:clamp(15px, 1vw, 20px); color:var(--gold); margin-top:4px; }
   .char[data-kind="bird"] { box-shadow: inset 0 0 0 1px rgba(166,216,255,.10); }
   .char[data-kind="insect"] { box-shadow: inset 0 0 0 1px rgba(184,233,156,.10); }
   .char.lost {
@@ -157,13 +162,13 @@
     letter-spacing:.03em;
   }
   .availability-note {
-    padding:10px 12px;
+    padding:14px 16px;
     border-radius:14px;
     background:rgba(246,223,145,.10);
     border:1px solid rgba(246,223,145,.18);
     color:rgba(255,250,240,.78);
-    font-size:12px;
-    line-height:1.35;
+    font-size:clamp(15px, 1vw, 19px);
+    line-height:1.4;
     grid-column:1 / -1;
   }
   .char-list.empty::before {
@@ -174,7 +179,7 @@
     border-radius:14px;
     background:rgba(255,255,255,.06);
     color:rgba(255,255,255,.72);
-    font-size:12px;
+    font-size:clamp(15px, 1vw, 19px);
     line-height:1.35;
   }
   .tooltip {
@@ -191,7 +196,7 @@
   .drag-proxy { position:absolute; width:136px; height:136px; transform:translate(-50%,-50%); filter:drop-shadow(0 18px 28px rgba(0,0,0,.36)); }
   .drag-proxy img { width:100%; height:100%; object-fit:contain; }
   .actionbar {
-    position:absolute; left:16px; bottom:16px; right:380px; z-index:7;
+    position:absolute; left:16px; bottom:16px; right:var(--sidebar-space); z-index:7;
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding:12px 14px;
   }
@@ -308,6 +313,10 @@
   @keyframes shake { 0%,100%{margin-left:0} 25%{margin-left:-7px} 50%{margin-left:7px} 75%{margin-left:-5px} }
   @keyframes pop { from{opacity:0; transform:translate(-50%,-50%) scale(.75)} to{opacity:1; transform:translate(-50%,-50%) scale(1)} }
   @media (max-width: 980px) {
+    :root {
+      --sidebar-w: auto;
+      --sidebar-space: 0px;
+    }
     .shell { height: 96vh; }
     .hud { right:16px; flex-direction:column; }
     #gameScreen .bg, #gameScreen .veil { right: 0; }
@@ -694,10 +703,13 @@ function renderSlots() {
       const c = getChar(charId);
       const placedEl = document.createElement('div');
       placedEl.className = 'placed';
+      placedEl.dataset.id = c.id;
+      placedEl.dataset.slotId = slot.id;
       placedEl.style.left = slot.x + '%';
       placedEl.style.top = slot.y + '%';
       placedEl.innerHTML = `<img src="${c.img}" alt="${c.name}"><span class="tag">${c.name} · ${c.skill}</span>`;
       field.appendChild(placedEl);
+      bindPlaced(placedEl, c, slot.id);
     }
   });
 }
@@ -743,16 +755,28 @@ function bindTooltip(el, c) {
 function bindChar(el, c) {
   el.addEventListener('pointerdown', ev => {
     ev.preventDefault();
-    tooltip.classList.remove('show');
-    drag = { char: c, activeSlot: null, proxy: document.createElement('div') };
-    drag.proxy.className = 'drag-proxy';
-    drag.proxy.innerHTML = `<img src="${c.img}" alt="${c.name}">`;
-    dragLayer.appendChild(drag.proxy);
+    startDrag(c, ev, null);
     el.classList.add('dragging');
-    moveProxy(ev.clientX, ev.clientY);
-    window.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp, { once:true });
   });
+}
+
+function bindPlaced(el, c, sourceSlotId) {
+  el.addEventListener('pointerdown', ev => {
+    ev.preventDefault();
+    startDrag(c, ev, sourceSlotId);
+    el.classList.add('dragging');
+  });
+}
+
+function startDrag(c, ev, sourceSlotId) {
+  tooltip.classList.remove('show');
+  drag = { char: c, sourceSlotId, activeSlot: null, proxy: document.createElement('div') };
+  drag.proxy.className = 'drag-proxy';
+  drag.proxy.innerHTML = `<img src="${c.img}" alt="${c.name}">`;
+  dragLayer.appendChild(drag.proxy);
+  moveProxy(ev.clientX, ev.clientY);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp, { once:true });
 }
 
 function moveProxy(x, y) {
@@ -783,20 +807,36 @@ function onUp() {
   if (!drag) return;
   const slotEl = drag.activeSlot;
   const c = drag.char;
-  document.querySelectorAll('.char.dragging').forEach(el => el.classList.remove('dragging'));
+  document.querySelectorAll('.char.dragging, .placed.dragging').forEach(el => el.classList.remove('dragging'));
   drag.proxy.remove();
   clearActiveSlots();
 
   if (slotEl) {
     const slot = getSlot(slotEl.dataset.id);
-    if (slot.kind === c.kind && !placed.has(slot.id)) {
+    const targetCharId = placed.get(slot.id);
+    if (slot.kind !== c.kind) {
+      slotEl.classList.add('wrong');
+      setTimeout(() => slotEl.classList.remove('wrong'), 320);
+      $('#warning').textContent = `${c.name} is a ${c.kind} and cannot enter a ${slot.kind} slot.`;
+    } else if (drag.sourceSlotId === slot.id) {
+      render();
+    } else if (!targetCharId) {
+      if (drag.sourceSlotId) placed.delete(drag.sourceSlotId);
       placed.set(slot.id, c.id);
       render();
     } else {
-      slotEl.classList.add('wrong');
-      setTimeout(() => slotEl.classList.remove('wrong'), 320);
-      const text = placed.has(slot.id) ? 'That task slot is already filled.' : `${c.name} is a ${c.kind} and cannot enter a ${slot.kind} slot.`;
-      $('#warning').textContent = text;
+      const targetChar = getChar(targetCharId);
+      if (targetChar?.kind === c.kind && drag.sourceSlotId) {
+        placed.set(slot.id, c.id);
+        placed.set(drag.sourceSlotId, targetCharId);
+        render();
+      } else {
+        slotEl.classList.add('wrong');
+        setTimeout(() => slotEl.classList.remove('wrong'), 320);
+        $('#warning').textContent = drag.sourceSlotId
+          ? 'Only companions of the same type can be swapped.'
+          : 'That task slot is already filled. Drag an assigned companion to swap positions.';
+      }
     }
   }
   drag = null;
