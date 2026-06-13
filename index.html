@@ -282,6 +282,11 @@
     opacity:0;
     pointer-events:none;
   }
+  .app.minigame .admin-toggle.active,
+  .app.intro-video .admin-toggle.active {
+    opacity:1;
+    pointer-events:auto;
+  }
   .app.final-minigame {
     width:100vw;
     height:100vh;
@@ -509,6 +514,9 @@
   .story-card.has-choices {
     padding-bottom:clamp(30px, 3.7vh, 46px);
   }
+  .story-card.three-choices {
+    padding:clamp(24px, 3vh, 38px) clamp(30px, 2.8vw, 50px);
+  }
   .story-card.fade-out { opacity:0; transform:translateY(8px); }
   .story-card.fade-in { animation: softAppear .8s ease both; }
   .story-card::-webkit-scrollbar {
@@ -638,6 +646,24 @@
   .choice:hover { transform:translateY(-3px); border-color:rgba(255,255,255,.92); box-shadow:0 20px 42px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.7); }
   .choice p { margin:.1em 0; }
   .choice strong { color:inherit; font-weight:700; }
+  .story-card.three-choices .choices {
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    margin-top:10px;
+  }
+  .story-card.three-choices .choice {
+    min-height:68px;
+    padding:12px 13px;
+    border-radius:18px;
+    font-size:clamp(11pt, calc(var(--story-font-size) * .68), 13pt);
+    line-height:1.12;
+  }
+  .story-card.three-choices .choice::before {
+    border-radius:17px 17px 34% 34%;
+  }
+  .story-card.three-choices .choice p {
+    margin:0;
+  }
   .end { padding:0; border-radius:0; background:transparent; color:#645a4d; margin-top:8px; }
   .branch-box { display:none; gap:10px; flex-direction:column; margin-top:10px; padding:10px; border:1px dashed rgba(255,255,255,.35); border-radius:18px; background:transparent; }
   .branch-box.active { display:flex; }
@@ -1253,7 +1279,7 @@ function isNarrationOnlyPage(node) {
   return !isAnyMiniGame(node) && !node?.coverPage && !node?.media && !!strip(node?.content || '') && !titleScreenText(node);
 }
 function hasDecoratedMedia(node) {
-  return false;
+  return node?.media?.type === 'image' && !node.coverPage && !isAnyMiniGame(node);
 }
 function appendMediaDecor(node) {
   if (!hasDecoratedMedia(node)) return;
@@ -1266,8 +1292,9 @@ function appendMediaDecor(node) {
   media.appendChild(img);
 }
 function shouldShowVideoToggle(node) {
+  if (node?.media?.type !== 'video') return false;
   const text = `${node?.titleText || ''} ${node?.media?.src || ''}`.toLowerCase();
-  if (/\.gif($|[?#])/.test(text) || /\bgif\b/.test(text)) return false;
+  if (node?.media?.loop || /\.gif($|[?#])/.test(text) || /\bgif\b/.test(text)) return false;
   return true;
 }
 function videoToggleIcon(paused) {
@@ -1287,10 +1314,16 @@ function createVideoContinueButton(out, hidden = true) {
   });
   return button;
 }
+function revealVideoContinue(node, button) {
+  if (currentId !== node.id || !button?.isConnected) return;
+  const out = node.outputs?.[0] || null;
+  activeAutoOutput = out;
+  button.hidden = !out;
+}
 function videoContinueDelayForNode(node) {
   const title = normalizedTitle(node);
-  if (title === 'INTRODUCTION') return 118000;
-  return 30000;
+  if (title === 'INTRODUCTION') return 90000;
+  return 45000;
 }
 
 function resetCaptionBounds() {
@@ -1564,7 +1597,7 @@ function renderMedia(node) {
   if (isNorahMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
-    frame.src = 'assets/NORAMINIGAME.html?v=nora-ui-3x';
+    frame.src = 'assets/NORAMINIGAME.html?v=nora-steps-4';
     frame.title = 'Norah mini game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     media.appendChild(frame);
@@ -1573,7 +1606,7 @@ function renderMedia(node) {
   if (isPaulMiniGame(node)) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
-    frame.src = 'assets/PAUL_MINIGAME.html?v=paul-replace-1';
+    frame.src = 'assets/PAUL_MINIGAME.html?v=paul-admin-2';
     frame.title = 'Paul mini game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     media.appendChild(frame);
@@ -1583,7 +1616,7 @@ function renderMedia(node) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
     const lostQuery = Object.entries(companionLosses).filter(([, lost]) => lost).map(([id]) => id).join(',');
-    frame.src = `assets/FINAL_GAME.html?v=final-battle-5${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
+    frame.src = `assets/FINAL_GAME.html?v=final-battle-6${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
     frame.title = 'Final game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     frame.addEventListener('load', () => sendFinalBattleState(frame));
@@ -1616,11 +1649,7 @@ function renderMedia(node) {
     media.appendChild(frame);
     if (isVideoContinuePage(node)) {
       const continueButton = createVideoContinueButton(node.outputs[0], true);
-      window.setTimeout(() => {
-        if (currentId !== node.id || !continueButton.isConnected) return;
-        activeAutoOutput = node.outputs[0];
-        continueButton.hidden = false;
-      }, videoContinueDelayForNode(node));
+      window.setTimeout(() => revealVideoContinue(node, continueButton), videoContinueDelayForNode(node));
       media.appendChild(continueButton);
     }
     appendMediaDecor(node);
@@ -1660,17 +1689,19 @@ function renderMedia(node) {
       media.appendChild(toggle);
       updateToggle();
     }
-    v.addEventListener('loadedmetadata', () => updateCaptionBoundsFromMedia(v));
-    if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
+    let continueButton = null;
     if (isVideoContinuePage(node) && !node.media.loop) {
-      const continueButton = createVideoContinueButton(node.outputs[0], true);
-      v.addEventListener('ended', () => {
-        if (currentId !== node.id || !continueButton.isConnected) return;
-        activeAutoOutput = node.outputs[0];
-        continueButton.hidden = false;
-      });
+      continueButton = createVideoContinueButton(node.outputs[0], true);
+      v.addEventListener('ended', () => revealVideoContinue(node, continueButton));
       media.appendChild(continueButton);
     }
+    v.addEventListener('loadedmetadata', () => {
+      updateCaptionBoundsFromMedia(v);
+      if (continueButton && Number.isFinite(v.duration) && v.duration > 0) {
+        window.setTimeout(() => revealVideoContinue(node, continueButton), Math.ceil(v.duration * 1000) + 350);
+      }
+    });
+    if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
   } else {
@@ -1703,7 +1734,7 @@ function renderChoices(node) {
   choicesEl.innerHTML = '';
   activeAutoOutput = null;
   const storyCard = document.querySelector('.story-card');
-  storyCard.classList.remove('can-continue', 'has-choices');
+  storyCard.classList.remove('can-continue', 'has-choices', 'three-choices');
   branchBox.classList.remove('active');
   endBox.style.display = node.outputs.length ? 'none' : 'block';
 
@@ -1743,6 +1774,7 @@ function renderChoices(node) {
   }
 
   if (node.outputs.length > 0) storyCard.classList.add('has-choices');
+  storyCard.classList.toggle('three-choices', node.outputs.length === 3);
   node.outputs.forEach((out, i) => {
     const btn = document.createElement('button'); btn.className='choice';
     btn.innerHTML = formatDialogueHTML(out.label || `<p>Choice ${i+1}</p>`);
@@ -2002,6 +2034,11 @@ window.addEventListener('keydown', e => {
 window.addEventListener('message', e => {
   if (!e.data || !e.data.type) return;
   const node = GAME.nodes[currentId];
+  if (e.data.type === 'GLEANIAN_ADMIN_TAP') {
+    registerAdminShortcutPress();
+    registerVSkipPress();
+    return;
+  }
   if (e.data.type === 'MINIGAME_SKIP_VVVV') {
     skipCurrentMiniGame();
     return;

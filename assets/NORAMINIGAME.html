@@ -13,7 +13,7 @@ body{background:#080400;min-height:100vh;font-family:'DM Sans', sans-serif;overf
 #c{width:100vw;height:100vh;display:block}
 #ui{position:absolute;right:28px;top:28px;background:rgba(8,3,0,.88);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:20px 24px;border-radius:24px;line-height:1.35;min-width:300px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
 #ui h2{color:#ffd040;font-size:28px;margin-bottom:14px;letter-spacing:.2px}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:18px;gap:24px;margin-top:10px}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:17px;gap:24px;margin-top:9px}
 .v{color:#ffe880;font-weight:700}
 .steps-value{font-size:40px;line-height:1;color:#fff0a2;text-shadow:0 0 14px rgba(255,208,64,.55)}
 .meter{height:14px;margin-top:10px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,208,64,.25);overflow:hidden}
@@ -113,8 +113,10 @@ button:hover{background:linear-gradient(180deg,#76834d,#536139);filter:brightnes
   <h2>Nora's Game</h2>
   <div class="row"><span>Pollen</span><span class="v" id="u_p">0/10</span></div>
   <div class="meter"><div class="meter-fill" id="u_pbar"></div></div>
-  <div class="row"><span>Steps</span><span class="v steps-value" id="u_s2">0</span></div>
-  <div class="row"><span>Speed Level</span><span class="v" id="u_s">0</span></div>
+  <div class="row"><span>Current Steps</span><span class="v" id="u_cs">0</span></div>
+  <div class="row"><span>Current Shortest</span><span class="v" id="u_cb">0</span></div>
+  <div class="row"><span>Total Steps</span><span class="v steps-value" id="u_s2">0</span></div>
+  <div class="row"><span>Total Shortest</span><span class="v" id="u_tb">0</span></div>
 </div>
 </div>
 <div id="ov" class="on">
@@ -218,7 +220,7 @@ function bfs(sq,sr,eq,er){
   return 999;
 }
 
-let cells,bee,beeDraw,pollenPos,pollen,steps,anim=null;
+let cells,bee,beeDraw,pollenPos,pollen,steps,segmentStartSteps,currentShortest,totalShortest,anim=null;
 let gameStarted=false, gameFinished=false;
 let showTapHint = false;
 updateLayout();
@@ -236,6 +238,9 @@ function spawnPollen(){
     d=bfs(bee.q,bee.r,pq,pr);
   }while(d===999&&++t<30);
   pollenPos={q:pq,r:pr};
+  currentShortest=bfs(bee.q,bee.r,pollenPos.q,pollenPos.r);
+  if(currentShortest>=999)currentShortest=0;
+  segmentStartSteps=steps;
 }
 
 function generateObstacles(){
@@ -272,7 +277,7 @@ function init(){
     for(let r=-GR;r<=GR;r++)
       if(Math.abs(q+r)<=GR)cells.set(K(q,r),'E');
 
-  bee={q:0,r:0};beeDraw=hp(0,0);pollen=0;steps=0;anim=null;
+  bee={q:0,r:0};beeDraw=hp(0,0);pollen=0;steps=0;segmentStartSteps=0;currentShortest=0;totalShortest=0;anim=null;
   // Show a first-move guide after entering the game. It disappears after the first valid tap.
   showTapHint = true;
   generateObstacles();
@@ -309,6 +314,7 @@ function finishMove(){
   steps++;
   if(pollenPos&&bee.q===pollenPos.q&&bee.r===pollenPos.r){
     pollen++;
+    totalShortest+=currentShortest||0;
     if(pollen>=10){anim=null;render();uiUpdate();endGame();return}
     generateObstacles(); // every new flower refreshes the rocks and branches
     spawnPollen();
@@ -343,16 +349,17 @@ function move(dq,dr){
 function uiUpdate(){
   document.getElementById('u_p').textContent=`${pollen}/10`;
   document.getElementById('u_pbar').style.width=`${Math.min(100,pollen*10)}%`;
+  document.getElementById('u_cs').textContent=Math.max(0,steps-segmentStartSteps);
+  document.getElementById('u_cb').textContent=currentShortest||0;
   document.getElementById('u_s2').textContent=steps;
-  const sp=speed();
-  document.getElementById('u_s').textContent=`Lv ${sp}`;
+  document.getElementById('u_tb').textContent=totalShortest;
 }
 
 function endGame(){
   document.getElementById('ov').classList.add('on');
   document.getElementById('b_t').textContent='🌟 Mission Complete!';
   document.getElementById('b_b').innerHTML=`
-    <p>Pollen 10/10 &nbsp;·&nbsp; Total steps ${steps}</p>
+    <p>Pollen 10/10 &nbsp;·&nbsp; Total steps ${steps} &nbsp;·&nbsp; Shortest ${totalShortest}</p>
     <p class="q">Great job! Nora's bee found every flower through the seeds and rocks.</p>
   `;
   const btn=document.getElementById('ov_btn');
@@ -567,6 +574,12 @@ cv.addEventListener('pointerdown',e=>{
       if(!target || best.q!==target.q || best.r!==target.r)return;
     }
     move(dq,dr);
+  }
+});
+
+window.addEventListener('keydown',e=>{
+  if((e.key||'').toLowerCase()==='v'){
+    try{window.parent.postMessage({type:'GLEANIAN_ADMIN_TAP'},'*')}catch(err){}
   }
 });
 

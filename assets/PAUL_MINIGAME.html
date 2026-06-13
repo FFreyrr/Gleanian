@@ -905,6 +905,11 @@ html,body{font-family:'DM Sans', sans-serif;background:#e9dfcc;color:var(--ui-in
     $('resetBtn').addEventListener('click', notifyComplete);
     window.addEventListener('resize', scheduleSideCardLayout);
     window.addEventListener('orientationchange', scheduleSideCardLayout);
+    window.addEventListener('keydown', event => {
+      if ((event.key || '').toLowerCase() === 'v') {
+        try { window.parent.postMessage({ type: 'GLEANIAN_ADMIN_TAP' }, '*'); } catch (err) {}
+      }
+    });
     renderTeam();
     renderSlots();
     scheduleSideCardLayout();

@@ -1080,6 +1080,11 @@ $('#restartFromCheckBtn').addEventListener('click', newGame);
 $('#closeCheckBtn').addEventListener('click', () => { document.getElementById('sidePanel').classList.remove('mode-check'); document.getElementById('checkPanel').style.display = 'none'; show($('#gameScreen')); });
 $('#rollBtn').addEventListener('click', openChecks);
 $('#nextCheckBtn').addEventListener('click', nextCheckAction);
+window.addEventListener('keydown', event => {
+  if ((event.key || '').toLowerCase() === 'v') {
+    try { window.parent.postMessage({ type: 'GLEANIAN_ADMIN_TAP' }, '*'); } catch (err) {}
+  }
+});
 </script>
 </body>
 </html>
