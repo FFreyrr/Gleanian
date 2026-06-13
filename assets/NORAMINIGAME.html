@@ -3,15 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <title>Nora's Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#080400;min-height:100vh;font-family:Georgia,serif;overflow:hidden}
+body{background:#080400;min-height:100vh;font-family:'DM Sans', sans-serif;overflow:hidden}
 #game{position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;background:#100700}
 #c{width:100vw;height:100vh;display:block}
 #ui{position:absolute;right:18px;top:18px;background:rgba(8,3,0,.88);border:1px solid rgba(255,208,64,.42);color:#edb840;padding:14px 16px;border-radius:14px;line-height:1.5;min-width:240px;box-shadow:0 12px 30px rgba(0,0,0,.34);backdrop-filter:blur(3px)}
 #ui h2{color:#ffd040;font-size:22px;margin-bottom:10px;letter-spacing:.4px}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:15px;gap:14px;margin-top:8px}
-.v{color:#ffe880;font-weight:bold}
+.v{color:#ffe880;font-weight:700}
 .steps-value{font-size:34px;line-height:1;color:#fff0a2;text-shadow:0 0 14px rgba(255,208,64,.55)}
 .meter{height:12px;margin-top:7px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,208,64,.25);overflow:hidden}
 .meter-fill{width:0%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#ffb52e,#ffe87c);box-shadow:0 0 14px rgba(255,208,64,.7);transition:width .22s ease}
@@ -21,8 +24,8 @@ body{background:#080400;min-height:100vh;font-family:Georgia,serif;overflow:hidd
 #bx{background:#0c0500;border:2px solid #ffd040;color:#edb840;padding:42px 60px;border-radius:20px;text-align:center;max-width:560px}
 #bx h2{color:#ffd040;font-size:32px;margin-bottom:16px}
 #bx p{font-size:18px;line-height:1.8}
-.q{color:#ed8166;font-style:italic;margin-top:14px;font-size:15px;line-height:1.8}
-button{margin-top:26px;background:#ffd040;color:#080400;border:none;padding:13px 38px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:bold}
+.q{color:#ed8166;font-style:normal;margin-top:14px;font-size:15px;line-height:1.8}
+button{margin-top:26px;background:#ffd040;color:#080400;border:none;padding:13px 38px;border-radius:12px;cursor:pointer;font-size:17px;font-weight:700}
 button:hover{background:#ffe860}
 
 
@@ -40,7 +43,7 @@ button:hover{background:#ffe860}
   --ui-shadow:0 22px 60px rgba(36,31,18,.28);
   --ui-soft-shadow:0 12px 30px rgba(36,31,18,.16);
 }
-body{font-family:Georgia,'Times New Roman',serif;background:#e9dfcc;color:var(--ui-ink)}
+body{font-family:'DM Sans', sans-serif;background:#e9dfcc;color:var(--ui-ink)}
 #game{background:#e9dfcc}
 #ui{
   background:var(--ui-panel);
@@ -51,7 +54,7 @@ body{font-family:Georgia,'Times New Roman',serif;background:#e9dfcc;color:var(--
   backdrop-filter:blur(10px) saturate(1.05);
   padding:16px 18px;
 }
-#ui h2{color:var(--ui-ink);font-style:italic;letter-spacing:-.02em}
+#ui h2{color:var(--ui-ink);font-style:normal;letter-spacing:-.02em}
 .row{color:var(--ui-muted)}
 .v,.steps-value{color:var(--ui-gold);text-shadow:none}
 .meter{background:rgba(91,97,54,.12);border:1px solid var(--ui-border)}
@@ -65,7 +68,7 @@ body{font-family:Georgia,'Times New Roman',serif;background:#e9dfcc;color:var(--
   border-radius:34px;
   box-shadow:var(--ui-shadow);
 }
-#bx h2{color:var(--ui-ink);font-style:italic;letter-spacing:-.025em}
+#bx h2{color:var(--ui-ink);font-style:normal;letter-spacing:-.025em}
 #bx p{color:var(--ui-muted)}
 button{
   background:linear-gradient(180deg,#6f7947,#4d5a32);
@@ -438,7 +441,7 @@ function drawGuideOverlay(pulse){
 
   const text='Tap a glowing hex';
   ctx.save();
-  ctx.font=`bold ${Math.max(18, Math.min(24, SZ*.52))}px Georgia, serif`;
+  ctx.font=`700 ${Math.max(18, Math.min(24, SZ*.52))}px 'DM Sans', sans-serif`;
   ctx.textAlign='center';
   ctx.textBaseline='middle';
   const padX=18,w=ctx.measureText(text).width+padX*2,h=38;

@@ -4,26 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Gleanian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-
-  @font-face {
-    font-family: 'Sculpin';
-    src: local('Sculpin Regular'), local('Sculpin-Regular'), local('Sculpin');
-    font-weight: 400;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: 'Sculpin';
-    src: local('Sculpin Medium'), local('Sculpin-Medium'), local('Sculpin');
-    font-weight: 500;
-    font-style: normal;
-  }
-  @font-face {
-    font-family: 'Sculpin';
-    src: local('Sculpin Bold'), local('Sculpin-Bold'), local('Sculpin');
-    font-weight: 700;
-    font-style: normal;
-  }
   :root {
     --ink:#f4f4f4;
     --muted:rgba(255,255,255,.72);
@@ -45,7 +29,7 @@
     height:100vh;
     min-width:0;
     min-height:0;
-    font-family: 'Sculpin', Arial, sans-serif;
+    font-family:'DM Sans', sans-serif;
     color:var(--ink);
     background:#000;
     overflow:hidden;
@@ -86,7 +70,7 @@
   .app:hover header { opacity:1; }
   .brand { display:none; }
   .tools { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; pointer-events:auto; }
-  button { font-family:'Sculpin', Arial, sans-serif; font-size:14px; cursor:pointer; border:0; transition:.18s ease; }
+  button { font-family:'DM Sans', sans-serif; font-size:14px; cursor:pointer; border:0; transition:.18s ease; }
   .toolbtn {
     color:#fff;
     background:rgba(0,0,0,.5);
@@ -277,7 +261,7 @@
     padding:18px 34px 19px;
     color:#fff;
     font-size:clamp(25px, 2.5vw, 42px);
-    font-weight:800;
+    font-weight:700;
     letter-spacing:0;
     border:1px solid rgba(255,255,255,.55);
     border-radius:999px;
@@ -482,10 +466,10 @@
     padding:18px 22px;
     border-radius:24px;
     color:#fff;
-    font-family:'Sculpin', Arial, sans-serif;
+    font-family:'DM Sans', sans-serif;
     font-size:var(--story-font-size);
     line-height:1.2;
-    font-weight:800;
+    font-weight:700;
     background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.075));
     box-shadow:0 16px 34px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.55), inset 0 -18px 36px rgba(255,255,255,.08);
     border:1px solid rgba(255,255,255,.46);
@@ -513,7 +497,7 @@
   }
   .choice:hover { transform:translateY(-3px); border-color:rgba(255,255,255,.92); box-shadow:0 20px 42px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.7); }
   .choice p { margin:.1em 0; }
-  .choice strong { color:inherit; font-weight:900; }
+  .choice strong { color:inherit; font-weight:700; }
   .end { padding:0; border-radius:0; background:transparent; color:rgba(255,255,255,.7); margin-top:8px; }
   .branch-box { display:none; gap:10px; flex-direction:column; margin-top:10px; padding:10px; border:1px dashed rgba(255,255,255,.35); border-radius:18px; background:transparent; }
   .branch-box.active { display:flex; }
@@ -604,7 +588,7 @@
     border:1px solid rgba(255,255,255,.22);
     border-radius:6px;
     padding:10px;
-    font:14px 'Sculpin', Arial, sans-serif;
+    font:400 14px 'DM Sans', sans-serif;
   }
   .admin-select {
     min-height:176px;

@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Ancient Tree Quest - Skill Check Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --panel: rgba(16, 24, 13, .78);
@@ -24,7 +27,7 @@
   * { box-sizing: border-box; }
   html, body {
     margin: 0; width: 100%; height: 100%; overflow: hidden;
-    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-family:'DM Sans', sans-serif;
     background: #172113; color: var(--text); user-select: none;
   }
   body { display: flex; align-items: stretch; justify-content: stretch; padding: 0; }
@@ -49,7 +52,7 @@
   p { color: var(--muted); line-height:1.55; }
   .btn {
     border:0; border-radius:999px; cursor:pointer;
-    padding: 13px 24px; font-size: 17px; font-weight:800;
+    padding: 13px 24px; font-size: 17px; font-weight:700;
     background: linear-gradient(135deg, #f6df91, #b8e99c);
     color:#24301d; box-shadow: 0 10px 26px rgba(0,0,0,.24);
     transition: transform .16s ease, filter .16s ease, opacity .16s ease;
@@ -88,7 +91,7 @@
   .slot[data-kind="insect"] { outline: 3px solid rgba(184,233,156,.18); }
   .slot .slot-title {
     position:absolute; left:50%; top:-38px; transform:translateX(-50%);
-    min-width: 210px; font-size:13px; font-weight:900; letter-spacing:.02em;
+    min-width: 210px; font-size:13px; font-weight:700; letter-spacing:.02em;
     color:rgba(255,255,255,.93); text-shadow:0 2px 6px rgba(0,0,0,.45);
   }
   .slot .kind-label {
@@ -134,7 +137,7 @@
   .char:hover { background: rgba(255,255,255,.10); transform: translateY(-2px); }
   .char.dragging { opacity:.35; }
   .char img { max-width:96px; max-height:74px; object-fit:contain; pointer-events:none; }
-  .char .name { font-weight:900; font-size:clamp(16px, 1.1vw, 20px); margin-top:6px; }
+  .char .name { font-weight:700; font-size:clamp(16px, 1.1vw, 20px); margin-top:6px; }
   .char .skill { font-size:clamp(13px, .9vw, 17px); color:var(--gold); margin-top:3px; }
   .char[data-kind="bird"] { box-shadow: inset 0 0 0 1px rgba(166,216,255,.10); }
   .char[data-kind="insect"] { box-shadow: inset 0 0 0 1px rgba(184,233,156,.10); }
@@ -157,7 +160,7 @@
     background:rgba(116,22,22,.9);
     color:#fff;
     font-size:10px;
-    font-weight:900;
+    font-weight:700;
     text-align:center;
     text-transform:uppercase;
     letter-spacing:.03em;
@@ -192,7 +195,7 @@
   }
   .tooltip.show { opacity:1; transform: translateY(0); }
   .tooltip b { display:block; font-size:14px; margin-bottom:5px; }
-  .tooltip .value { color: var(--gold); font-weight:900; }
+  .tooltip .value { color: var(--gold); font-weight:700; }
   .drag-layer { position:absolute; inset:0; pointer-events:none; z-index:40; }
   .drag-proxy { position:absolute; width:136px; height:136px; transform:translate(-50%,-50%); filter:drop-shadow(0 18px 28px rgba(0,0,0,.36)); }
   .drag-proxy img { width:100%; height:100%; object-fit:contain; }
@@ -207,7 +210,7 @@
 
   .slot .placeholder { display:none; }
   .slot .kind-label { display:none; }
-  .slot .slot-label-main { font-size:18px; font-weight:800; color:rgba(255,255,255,.92); letter-spacing:.03em; }
+  .slot .slot-label-main { font-size:18px; font-weight:700; color:rgba(255,255,255,.92); letter-spacing:.03em; }
   .sidebar-placement { display:grid; grid-template-columns:minmax(230px, .85fr) minmax(420px, 1.65fr); grid-template-rows:1fr auto; gap:14px; min-height:0; flex:1; }
   .sidebar-placement .rules { grid-row:1 / 3; min-height:0; overflow:auto; }
   .sidebar-placement .actionbar { grid-column:2; }
@@ -240,7 +243,7 @@
     gap:10px;
   }
   .formula-label { color:rgba(255,255,255,.86); font-weight:700; }
-  .formula-op { color:rgba(255,255,255,.72); font-weight:900; }
+  .formula-op { color:rgba(255,255,255,.72); font-weight:700; }
   .formula b, .formula .die, .formula .total-box {
     display:inline-flex;
     align-items:center;
@@ -253,7 +256,7 @@
     border:1px solid rgba(255,255,255,.18);
     font-size:18px;
     color:#fffaf0;
-    font-weight:900;
+    font-weight:700;
   }
   .formula .die {
     background:linear-gradient(135deg, rgba(246,223,145,.30), rgba(184,233,156,.22));
@@ -267,7 +270,7 @@
     align-items:center;
     gap:10px;
     justify-content:flex-end;
-    font-weight:900;
+    font-weight:700;
   }
   .roll-copy { margin-top:14px; padding:14px; border-radius:16px; line-height:1.5; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); font-size:14px; font-weight:700; }
   .roll-copy.pass { color:#edffe6; }
@@ -278,13 +281,13 @@
   }
   .check-head { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; margin-bottom:14px; }
   .check-head h2 { margin:0; font-size: clamp(26px,3.3vw,42px); }
-  .check-meta { color:var(--gold); font-weight:900; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
+  .check-meta { color:var(--gold); font-weight:700; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
   .textbox {
     border:1px solid var(--line); border-radius:20px; background:rgba(255,255,255,.07);
     padding:16px; min-height:188px;
   }
   .task-copy { color: var(--muted); margin:8px 0 13px; line-height:1.52; }
-  .prompt { color: #fff; font-weight:800; margin-bottom:12px; }
+  .prompt { color: #fff; font-weight:700; margin-bottom:12px; }
   .formula {
     display:flex; flex-wrap:wrap; gap:8px; align-items:center;
     padding:12px; border-radius:15px; background:rgba(0,0,0,.20);
@@ -292,7 +295,7 @@
   }
   .die {
     display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
-    border-radius:13px; background:#fff9e3; color:#27311d; font-weight:1000; font-size:24px;
+    border-radius:13px; background:#fff9e3; color:#27311d; font-weight:700; font-size:24px;
     box-shadow: 0 8px 20px rgba(0,0,0,.22);
   }
   .roll-copy {
@@ -307,8 +310,8 @@
   }
   .history-row { display:grid; grid-template-columns: 1fr auto; gap:12px; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.10); font-size:12px; }
   .history-row:last-child { border-bottom:0; }
-  .pass { color: var(--green); font-weight:900; }
-  .fail { color: var(--red); font-weight:900; }
+  .pass { color: var(--green); font-weight:700; }
+  .fail { color: var(--red); font-weight:700; }
   .check-actions { display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top:16px; }
   #restartFromCheckBtn { display:none !important; }
   .final-result { text-align:center; margin:16px 0 4px; }
@@ -364,7 +367,7 @@
   --blue:var(--ui-blue);
   --shadow:var(--ui-shadow);
 }
-html,body{font-family:Georgia,'Times New Roman',serif;background:#e9dfcc;color:var(--ui-ink)}
+html,body{font-family:'DM Sans', sans-serif;background:#e9dfcc;color:var(--ui-ink)}
 .shell{border-radius:0;background:#e9dfcc;box-shadow:none;width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none}
 body{padding:0}
 .veil{background:linear-gradient(90deg,rgba(31,38,20,.32),rgba(31,38,20,.08) 54%,rgba(31,38,20,.38))}
@@ -376,7 +379,7 @@ body{padding:0}
   box-shadow:var(--ui-shadow);
   backdrop-filter:blur(10px) saturate(1.05);
 }
-h1,h2,.side h3,.check-panel h3,.check-head h2{color:var(--ui-ink);letter-spacing:-.025em;font-style:italic}
+h1,h2,.side h3,.check-panel h3,.check-head h2{color:var(--ui-ink);letter-spacing:-.025em;font-style:normal}
 p,.title p,.side p,.rules ul,.message,.task-copy{color:var(--ui-muted)}
 .btn,.btn.mini{
   background:linear-gradient(180deg,#6f7947,#4d5a32);
