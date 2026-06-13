@@ -17,8 +17,9 @@
     --blue: #a6d8ff;
     --shadow: 0 18px 50px rgba(0,0,0,.32);
     --side-gap: 16px;
-    --sidebar-w: calc(50vw - var(--side-gap) * 1.5);
-    --sidebar-space: calc(var(--sidebar-w) + var(--side-gap) * 2);
+    --bottom-panel-h: clamp(270px, 34vh, 390px);
+    --sidebar-w: auto;
+    --sidebar-space: 0px;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -58,7 +59,7 @@
   .btn:disabled { opacity:.48; cursor:not-allowed; transform:none; filter:none; }
   .btn.secondary { background: rgba(255,255,255,.12); color: var(--text); border:1px solid var(--line); box-shadow:none; }
   .game { z-index:2; background:#0d140c; }
-  #gameScreen .bg, #gameScreen .veil { right: var(--sidebar-space); }
+  #gameScreen .bg, #gameScreen .veil { right: 0; }
   .hud {
     position:absolute; top:16px; left:16px; right:var(--sidebar-space); z-index:5;
     display:flex; align-items:stretch; justify-content:space-between; gap:14px;
@@ -73,7 +74,7 @@
   .status { min-width:170px; padding:13px 18px; text-align:center; flex:0 0 170px; }
   .status span { display:block; text-transform:uppercase; letter-spacing:.12em; color:rgba(255,255,255,.68); font-size:11px; margin-bottom:5px; }
   .status strong { font-size: clamp(28px,4vw,42px); line-height:1; }
-  .field { position:absolute; inset:0 var(--sidebar-space) 0 0; z-index:3; }
+  .field { position:absolute; inset:0 0 var(--bottom-panel-h) 0; z-index:3; }
   .slot {
     position:absolute; width: 168px; min-height: 136px;
     transform: translate(-50%, -50%);
@@ -114,17 +115,17 @@
     border-radius:999px; padding:4px 8px; font-size:11px; white-space:nowrap;
   }
   .side {
-    position:absolute; right:var(--side-gap); top:16px; bottom:16px; width:var(--sidebar-w); z-index:6;
-    padding:clamp(18px, 2vw, 28px); display:flex; flex-direction:column; gap:18px;
+    position:absolute; left:var(--side-gap); right:var(--side-gap); top:auto; bottom:var(--side-gap); width:auto; height:var(--bottom-panel-h); z-index:6;
+    padding:clamp(16px, 1.6vw, 24px); display:flex; flex-direction:column; gap:16px;
     overflow:hidden;
   }
   .side h3 { margin:0 0 8px; font-size:clamp(27px, 2.2vw, 40px); }
   .side p { margin:0; font-size:clamp(16px, 1.15vw, 22px); }
   .rules { padding:clamp(18px, 1.5vw, 26px); }
   .rules ul { margin:14px 0 0 24px; padding:0; color:var(--muted); font-size:clamp(15px, 1vw, 19px); line-height:1.48; }
-  .char-list { flex:1; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:16px; padding-right:6px; }
+  .char-list { flex:1; overflow:auto; display:grid; grid-template-columns:repeat(6, minmax(130px, 1fr)); gap:14px; padding-right:6px; }
   .char {
-    position:relative; min-height:clamp(150px, 15vh, 230px); border-radius:22px;
+    position:relative; min-height:128px; border-radius:22px;
     background: rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     cursor:grab; touch-action:none; padding:14px 10px 12px;
@@ -132,9 +133,9 @@
   }
   .char:hover { background: rgba(255,255,255,.10); transform: translateY(-2px); }
   .char.dragging { opacity:.35; }
-  .char img { max-width:min(150px, 14vw); max-height:min(120px, 12vh); object-fit:contain; pointer-events:none; }
-  .char .name { font-weight:900; font-size:clamp(18px, 1.35vw, 25px); margin-top:8px; }
-  .char .skill { font-size:clamp(15px, 1vw, 20px); color:var(--gold); margin-top:4px; }
+  .char img { max-width:96px; max-height:74px; object-fit:contain; pointer-events:none; }
+  .char .name { font-weight:900; font-size:clamp(16px, 1.1vw, 20px); margin-top:6px; }
+  .char .skill { font-size:clamp(13px, .9vw, 17px); color:var(--gold); margin-top:3px; }
   .char[data-kind="bird"] { box-shadow: inset 0 0 0 1px rgba(166,216,255,.10); }
   .char[data-kind="insect"] { box-shadow: inset 0 0 0 1px rgba(184,233,156,.10); }
   .char.lost {
@@ -196,7 +197,8 @@
   .drag-proxy { position:absolute; width:136px; height:136px; transform:translate(-50%,-50%); filter:drop-shadow(0 18px 28px rgba(0,0,0,.36)); }
   .drag-proxy img { width:100%; height:100%; object-fit:contain; }
   .actionbar {
-    position:absolute; left:16px; bottom:16px; right:var(--sidebar-space); z-index:7;
+    position:static;
+    z-index:7;
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     padding:12px 14px;
   }
@@ -206,7 +208,9 @@
   .slot .placeholder { display:none; }
   .slot .kind-label { display:none; }
   .slot .slot-label-main { font-size:18px; font-weight:800; color:rgba(255,255,255,.92); letter-spacing:.03em; }
-  .sidebar-placement { display:flex; flex-direction:column; gap:12px; min-height:0; flex:1; }
+  .sidebar-placement { display:grid; grid-template-columns:minmax(230px, .85fr) minmax(420px, 1.65fr); grid-template-rows:1fr auto; gap:14px; min-height:0; flex:1; }
+  .sidebar-placement .rules { grid-row:1 / 3; min-height:0; overflow:auto; }
+  .sidebar-placement .actionbar { grid-column:2; }
   .side.mode-check .sidebar-placement { display:none; }
   .side.mode-check .check-panel { display:flex !important; }
   .check-panel { flex:1; min-height:0; display:flex; flex-direction:column; gap:12px; }
@@ -320,12 +324,12 @@
     .shell { height: 96vh; }
     .hud { right:16px; flex-direction:column; }
     #gameScreen .bg, #gameScreen .veil { right: 0; }
-    .field { inset: 126px 0 228px 0; }
-    .side { left:12px; right:12px; top:auto; bottom:12px; width:auto; height:206px; flex-direction:row; overflow:hidden; }
+    .field { inset: 0 0 var(--bottom-panel-h) 0; }
+    .side { left:12px; right:12px; top:auto; bottom:12px; width:auto; height:var(--bottom-panel-h); flex-direction:column; overflow:hidden; }
     .rules { display:none; }
     .char-list { display:flex; flex:1; overflow-x:auto; overflow-y:hidden; }
     .char { min-width:86px; min-height:112px; }
-    .actionbar { right:16px; bottom:224px; }
+    .actionbar { position:static; }
     .slot { width:134px; min-height:106px; }
     .slot .slot-title { min-width:160px; font-size:11px; top:-34px; }
     .placed { width:128px; height:128px; }
@@ -411,6 +415,39 @@ p,.title p,.side p,.rules ul,.message,.task-copy{color:var(--ui-muted)}
 .formula b,.formula .die,.formula .total-box{color:var(--ui-ink)!important;background:#fff8e8;border:1px solid var(--ui-border)}
 .formula-result span:first-child{color:var(--ui-gold)}
 
+/* Bottom companion tray layout */
+#gameScreen .hud{display:none}
+#gameScreen .bg,#gameScreen .veil{right:0}
+.field{inset:0 0 var(--bottom-panel-h) 0}
+.side{
+  left:var(--side-gap);
+  right:var(--side-gap);
+  top:auto;
+  bottom:var(--side-gap);
+  width:auto;
+  height:var(--bottom-panel-h);
+  background:rgba(255,248,232,.62);
+  border-color:rgba(91,97,54,.20);
+  box-shadow:0 18px 48px rgba(36,31,18,.18);
+}
+.rules,.actionbar,.char,.availability-note{
+  background:rgba(255,248,232,.48);
+  backdrop-filter:blur(8px) saturate(1.05);
+}
+.sidebar-placement{
+  display:grid;
+  grid-template-columns:minmax(230px,.85fr) minmax(420px,1.65fr);
+  grid-template-rows:1fr auto;
+  gap:14px;
+}
+.sidebar-placement .rules{grid-row:1 / 3; min-height:0; overflow:auto}
+.sidebar-placement .actionbar{grid-column:2; position:static}
+.char-list{grid-template-columns:repeat(6,minmax(130px,1fr))}
+@media (max-width:980px){
+  .sidebar-placement{display:flex; flex-direction:column}
+  .char-list{display:flex}
+}
+
 </style>
 </head>
 <body>
@@ -453,6 +490,16 @@ p,.title p,.side p,.rules ul,.message,.task-copy{color:var(--ui-muted)}
           </ul>
         </div>
         <div class="char-list" id="charList"></div>
+        <div class="panel actionbar">
+          <div>
+            <div class="message" id="message">Drag at least one bird and one insect into the matching task slots.</div>
+            <div class="slot-warning" id="warning"></div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <button class="btn secondary" id="resetBtn">Reset</button>
+            <button class="btn" id="rollBtn">Start Battle</button>
+          </div>
+        </div>
       </div>
       <div class="check-panel" id="checkPanel" style="display:none;">
         <div class="check-head">
@@ -471,16 +518,6 @@ p,.title p,.side p,.rules ul,.message,.task-copy{color:var(--ui-muted)}
         </div>
       </div>
     </aside>
-    <div class="panel actionbar">
-      <div>
-        <div class="message" id="message">Drag at least one bird and one insect into the matching task slots.</div>
-        <div class="slot-warning" id="warning"></div>
-      </div>
-      <div style="display:flex; gap:10px;">
-        <button class="btn secondary" id="resetBtn">Reset</button>
-        <button class="btn" id="rollBtn">Start Battle</button>
-      </div>
-    </div>
   </section>
 </div>
 <div class="tooltip" id="tooltip"></div>
