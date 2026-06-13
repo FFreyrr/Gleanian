@@ -128,6 +128,13 @@
     display:block;
     background:#000;
   }
+  .media-card video::-webkit-media-controls,
+  .media-card video::-webkit-media-controls-panel,
+  .media-card video::-webkit-media-controls-play-button,
+  .media-card video::-webkit-media-controls-start-playback-button {
+    display:none !important;
+    -webkit-appearance:none;
+  }
   .app.has-media-decor .media-card::after {
     content:"";
     position:absolute;
@@ -957,6 +964,10 @@ function googleDrivePreviewSrc(src) {
   const match = String(src || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
   return match ? `https://drive.google.com/file/d/${match[1]}/preview` : '';
 }
+function googleDriveVideoSrc(src) {
+  const match = String(src || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
+  return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : '';
+}
 function normalizedTitle(node) {
   return (node?.titleText || '').trim().toUpperCase().replace(/\s+/g, ' ');
 }
@@ -1051,9 +1062,8 @@ function appendMediaDecor(node) {
 }
 function shouldShowVideoToggle(node) {
   const text = `${node?.titleText || ''} ${node?.media?.src || ''}`.toLowerCase();
-  if (normalizedTitle(node) === 'INTRODUCTION' || isNoraIntroNode(node) || isPaulIntroNode(node)) return false;
   if (/\.gif($|[?#])/.test(text) || /\bgif\b/.test(text)) return false;
-  return !/(harry asking for help alone|nora helping harry|nora approaching harry)/.test(text);
+  return true;
 }
 function videoToggleIcon(paused) {
   return paused
@@ -1253,7 +1263,7 @@ function renderMedia(node) {
     return;
   }
   const driveSrc = googleDrivePreviewSrc(node.media.src);
-  if (driveSrc) {
+  if (driveSrc && node.media.type !== 'video') {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
     frame.src = driveSrc;
@@ -1265,15 +1275,17 @@ function renderMedia(node) {
     updateCaptionBoundsFromAspect();
     return;
   }
-  const src = encodeSrc(node.media.src);
   if (node.media.type === 'video') {
     const v = document.createElement('video');
+    const src = googleDriveVideoSrc(node.media.src) || encodeSrc(node.media.src);
     v.src = src; v.playsInline = true; v.muted = true;
+    v.controls = false;
+    v.disablePictureInPicture = true;
+    v.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback');
     v.onerror = () => {
       media.innerHTML = '<div class="media-placeholder">Put the required video file into the external_videos folder, then reopen index.html.</div>';
     };
     if (node.media.loop) v.loop = true;
-    if (node.media.controls) v.controls = true;
     media.appendChild(v);
     if (shouldShowVideoToggle(node)) {
       const toggle = document.createElement('button');
