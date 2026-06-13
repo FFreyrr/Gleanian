@@ -29,8 +29,8 @@
     --muted:rgba(255,255,255,.72);
     --line:rgba(255,255,255,.28);
     --shadow:rgba(0,0,0,.65);
-    --game-w:1840px;
-    --game-h:1200px;
+    --game-w:min(1840px, 100vw);
+    --game-h:min(1200px, 100vh);
     --caption-left:0px;
     --caption-width:100%;
     --story-font-size:20pt;
@@ -41,21 +41,23 @@
   * { box-sizing:border-box; }
   html, body { width:100%; height:100%; margin:0; }
   body {
-    min-width:var(--game-w);
-    min-height:var(--game-h);
+    width:100vw;
+    height:100vh;
+    min-width:0;
+    min-height:0;
     font-family: 'Sculpin', Arial, sans-serif;
     color:var(--ink);
     background:#000;
-    overflow:auto;
+    overflow:hidden;
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:var(--cursor-flower);
   }
   body::before { display:none; }
-  body.final-minigame-body {
-    min-width:100vw;
-    min-height:100vh;
+  body.minigame-body {
+    width:100vw;
+    height:100vh;
     overflow:hidden;
   }
   .app {
@@ -193,22 +195,29 @@
   .video-toggle {
     position:absolute;
     z-index:8;
-    left:50%;
+    left:calc(var(--caption-left) + 18px);
     bottom:18px;
-    transform:translateX(-50%);
-    min-width:92px;
-    color:#111;
-    background:rgba(255,196,80,.95);
-    border:1px solid rgba(255,255,255,.7);
-    border-radius:999px;
-    padding:9px 18px;
-    font-weight:700;
+    width:48px;
+    height:48px;
+    display:grid;
+    place-items:center;
+    color:#1a1200;
+    background:rgba(255,196,80,.96);
+    border:1px solid rgba(255,239,184,.82);
+    border-radius:50%;
+    padding:0;
     box-shadow:0 10px 24px rgba(0,0,0,.42);
     cursor:pointer;
   }
   .video-toggle:hover {
     background:#ffd47a;
-    transform:translate(-50%, -1px);
+    transform:translateY(-1px);
+  }
+  .video-toggle svg {
+    width:24px;
+    height:24px;
+    fill:currentColor;
+    display:block;
   }
 
   .mini-iframe {
@@ -219,8 +228,8 @@
     background:#000;
   }
   .app.minigame {
-    width:2020px;
-    height:1250px;
+    width:100vw;
+    height:100vh;
   }
   .app.minigame header,
   .app.minigame .admin-toggle:not(.active) {
@@ -300,15 +309,7 @@
     overflow:hidden;
   }
   .app.minigame .story-card {
-    position:absolute;
-    left:0;
-    right:0;
-    bottom:0;
-    height:auto;
-    min-height:0;
-    padding:10px 28px 16px;
-    background:linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,.72));
-    pointer-events:none;
+    display:none;
   }
   .app.minigame .content {
     display:none;
@@ -657,11 +658,7 @@
     transform:translate(-50%, 0);
   }
   .skip-game-btn:hover { background:#ffd47a; }
-  @media (max-width: 1100px) {
-    :root { --game-w:98vw; --game-h:92vh; }
-  }
   @media (max-width: 760px) {
-    :root { --game-w:96vw; --game-h:86vh; }
     header { opacity:.85; }
     .story-card { padding:14px 0 12px; }
     :root { --story-font-size:20pt; }
@@ -976,7 +973,7 @@ function isAnyMiniGame(node) {
   return isNorahMiniGame(node) || isPaulMiniGame(node) || isFinalMiniGame(node);
 }
 function isFullscreenMiniGame(node) {
-  return isPaulMiniGame(node) || isFinalMiniGame(node);
+  return isAnyMiniGame(node);
 }
 function isNoraIntroNode(node) {
   return normalizedTitle(node) === 'NORA INTRO VIDEO';
@@ -1054,8 +1051,14 @@ function appendMediaDecor(node) {
 }
 function shouldShowVideoToggle(node) {
   const text = `${node?.titleText || ''} ${node?.media?.src || ''}`.toLowerCase();
+  if (normalizedTitle(node) === 'INTRODUCTION' || isNoraIntroNode(node) || isPaulIntroNode(node)) return false;
   if (/\.gif($|[?#])/.test(text) || /\bgif\b/.test(text)) return false;
   return !/(harry asking for help alone|nora helping harry|nora approaching harry)/.test(text);
+}
+function videoToggleIcon(paused) {
+  return paused
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.3v13.4c0 .8.9 1.3 1.6.8l9.4-6.7c.6-.4.6-1.2 0-1.6L9.6 4.5C8.9 4 8 4.5 8 5.3z"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
 }
 
 function resetCaptionBounds() {
@@ -1276,7 +1279,11 @@ function renderMedia(node) {
       const toggle = document.createElement('button');
       toggle.className = 'video-toggle';
       toggle.type = 'button';
-      const updateToggle = () => { toggle.textContent = v.paused ? 'Play' : 'Pause'; };
+      const updateToggle = () => {
+        toggle.innerHTML = videoToggleIcon(v.paused);
+        toggle.setAttribute('aria-label', v.paused ? 'Play video' : 'Pause video');
+        toggle.title = v.paused ? 'Play' : 'Pause';
+      };
       toggle.addEventListener('click', event => {
         event.stopPropagation();
         if (v.paused) v.play().catch(()=>{});
@@ -1493,7 +1500,7 @@ function render() {
   titleEl.textContent = plainTitle;
   const appEl = document.querySelector('.app');
   const theme = chapterThemeForNode(node);
-  document.body.classList.toggle('final-minigame-body', isFinalMiniGame(node));
+  document.body.classList.toggle('minigame-body', isAnyMiniGame(node));
   appEl.classList.toggle('minigame', isFullscreenMiniGame(node));
   appEl.classList.toggle('final-minigame', isFinalMiniGame(node));
   appEl.classList.toggle('nora-theme', theme === 'nora');
