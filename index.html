@@ -964,10 +964,6 @@ function googleDrivePreviewSrc(src) {
   const match = String(src || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
   return match ? `https://drive.google.com/file/d/${match[1]}/preview` : '';
 }
-function googleDriveVideoSrc(src) {
-  const match = String(src || '').match(/drive\.google\.com\/file\/d\/([^/]+)/i);
-  return match ? `https://drive.google.com/uc?export=download&id=${match[1]}` : '';
-}
 function normalizedTitle(node) {
   return (node?.titleText || '').trim().toUpperCase().replace(/\s+/g, ' ');
 }
@@ -1263,7 +1259,7 @@ function renderMedia(node) {
     return;
   }
   const driveSrc = googleDrivePreviewSrc(node.media.src);
-  if (driveSrc && node.media.type !== 'video') {
+  if (driveSrc) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
     frame.src = driveSrc;
@@ -1277,7 +1273,7 @@ function renderMedia(node) {
   }
   if (node.media.type === 'video') {
     const v = document.createElement('video');
-    const src = googleDriveVideoSrc(node.media.src) || encodeSrc(node.media.src);
+    const src = encodeSrc(node.media.src);
     v.src = src; v.playsInline = true; v.muted = true;
     v.controls = false;
     v.disablePictureInPicture = true;
