@@ -90,10 +90,10 @@
     width:100%;
     height:100%;
     display:grid;
-    grid-template-columns:minmax(0, 1fr) clamp(126px, 10.5vw, 190px);
+    grid-template-columns:minmax(0, 1fr);
     grid-template-rows:minmax(0, 67%) minmax(220px, 33%);
-    gap:14px 22px;
-    padding:26px 28px 26px 5.8vw;
+    gap:14px;
+    padding:26px clamp(58px, 7vw, 122px);
     position:relative;
     background:transparent;
   }
@@ -228,10 +228,12 @@
     background:#000;
   }
   .character-rail {
-    grid-column:2;
-    grid-row:1 / span 2;
-    position:relative;
+    position:absolute;
+    top:26px;
+    right:18px;
+    bottom:26px;
     z-index:12;
+    width:clamp(104px, 8.4vw, 160px);
     min-height:0;
     overflow:auto;
     display:flex;
@@ -243,7 +245,7 @@
   }
   .character-rail::-webkit-scrollbar { display:none; }
   .character-card {
-    width:clamp(104px, 9.4vw, 174px);
+    width:100%;
     border:0;
     background:transparent;
     padding:0;
@@ -400,6 +402,21 @@
   .app.intro-video .character-rail {
     display:none;
   }
+  .app.narration-only main {
+    grid-template-rows:minmax(0, 1fr) minmax(220px, auto);
+  }
+  .app.narration-only .media-card {
+    display:none;
+  }
+  .app.narration-only .story-card {
+    align-self:end;
+    justify-self:center;
+    width:min(1120px, 82vw);
+    margin-left:0;
+    height:auto;
+    min-height:min(240px, 30vh);
+    max-height:48vh;
+  }
   .locked-note {
     color:rgba(255,255,255,.62);
     font-size:.92em;
@@ -417,6 +434,30 @@
     text-align:center;
     padding:30px;
     background:#000;
+  }
+  .video-continue {
+    position:absolute;
+    z-index:18;
+    left:50%;
+    bottom:clamp(24px, 5vh, 58px);
+    transform:translateX(-50%);
+    min-width:156px;
+    padding:14px 28px 15px;
+    border-radius:999px;
+    color:#1c1405;
+    background:rgba(255,196,80,.96);
+    border:1px solid rgba(255,239,184,.86);
+    box-shadow:0 14px 30px rgba(0,0,0,.36);
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0;
+  }
+  .video-continue[hidden] {
+    display:none;
+  }
+  .video-continue:hover {
+    background:#ffd47a;
+    transform:translate(-50%, -1px);
   }
   .title-screen {
     width:100%;
@@ -1198,6 +1239,15 @@ function chapterThemeForNode(node) {
 function isChoicePage(node) {
   return !isAnyMiniGame(node) && node?.outputs?.length > 1;
 }
+function hasPlainAutoOutput(node) {
+  return node?.outputs?.length === 1 && !strip(node.outputs[0].label);
+}
+function isVideoContinuePage(node) {
+  return node?.media?.type === 'video' && hasPlainAutoOutput(node);
+}
+function isNarrationOnlyPage(node) {
+  return !isAnyMiniGame(node) && !node?.coverPage && !node?.media && !!strip(node?.content || '') && !titleScreenText(node);
+}
 function hasDecoratedMedia(node) {
   return false;
 }
@@ -1220,6 +1270,18 @@ function videoToggleIcon(paused) {
   return paused
     ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.3v13.4c0 .8.9 1.3 1.6.8l9.4-6.7c.6-.4.6-1.2 0-1.6L9.6 4.5C8.9 4 8 4.5 8 5.3z"/></svg>'
     : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg>';
+}
+function createVideoContinueButton(out, hidden = true) {
+  const button = document.createElement('button');
+  button.className = 'video-continue';
+  button.type = 'button';
+  button.textContent = 'Continue';
+  button.hidden = hidden;
+  button.addEventListener('click', event => {
+    event.stopPropagation();
+    if (out) transitionTo(() => resolveOutput(out));
+  });
+  return button;
 }
 
 function resetCaptionBounds() {
@@ -1312,16 +1374,23 @@ const CHARACTER_AVATARS = {
 function characterKeyFromName(name) {
   return SPEAKER_CLASSES[name] || SPEAKER_CLASSES[name?.replace(/\s+/g, '')] || '';
 }
-function speakersInHTML(html) {
+function speakerOrderInHTML(html) {
   const names = Object.keys(SPEAKER_CLASSES).join('|');
   const speakerPattern = new RegExp(`\\b(${names}):`, 'g');
-  const found = new Set();
+  const found = [];
+  const seen = new Set();
   let match;
   while ((match = speakerPattern.exec(strip(html || '')))) {
     const key = characterKeyFromName(match[1]);
-    if (key) found.add(key);
+    if (key && !seen.has(key)) {
+      found.push(key);
+      seen.add(key);
+    }
   }
   return found;
+}
+function speakersInHTML(html) {
+  return new Set(speakerOrderInHTML(html));
 }
 function chapterKeyForNode(node) {
   const text = nodeSearchText(node);
@@ -1335,28 +1404,33 @@ function chapterKeyForNode(node) {
 }
 const ACTUAL_CHAPTER_CASTS = (() => {
   const buckets = {};
-  Object.values(GAME.nodes).forEach(node => {
-    if (!node || node.coverPage || isAnyMiniGame(node)) return;
-    const key = chapterKeyForNode(node);
-    if (!buckets[key]) buckets[key] = new Set();
-    speakersInHTML(node.content || '').forEach(speaker => buckets[key].add(speaker));
-  });
-  return Object.fromEntries(Object.entries(buckets).map(([key, set]) => [key, [...set].filter(speaker => CHARACTER_AVATARS[speaker])]));
+  const seenNodes = new Set();
+  const visit = id => {
+    if (!id || seenNodes.has(id)) return;
+    seenNodes.add(id);
+    const node = GAME.nodes[id];
+    if (!node) return;
+    if (!node.coverPage && !isAnyMiniGame(node)) {
+      const key = chapterKeyForNode(node);
+      if (!buckets[key]) buckets[key] = [];
+      speakerOrderInHTML(node.content || '').forEach(speaker => {
+        if (CHARACTER_AVATARS[speaker] && !buckets[key].includes(speaker)) buckets[key].push(speaker);
+      });
+    }
+    (node.outputs || []).forEach(out => {
+      if (out.targetType === 'elements') visit(out.target);
+      if (out.targetType === 'branches') {
+        const branch = GAME.branches[out.target];
+        visit(branch?.if?.target);
+        visit(branch?.else?.target);
+      }
+    });
+  };
+  visit(GAME.start);
+  return buckets;
 })();
-function charactersMentionedInNode(node) {
-  const text = `${strip(node?.title || '')} ${node?.titleText || ''} ${strip(node?.content || '')}`;
-  const found = new Set();
-  Object.entries(SPEAKER_CLASSES).forEach(([name, key]) => {
-    if (!CHARACTER_AVATARS[key]) return;
-    const pattern = new RegExp(`\\b${name}\\b`, 'i');
-    if (pattern.test(text)) found.add(key);
-  });
-  return found;
-}
 function characterCastForNode(node, activeSpeakers) {
-  const mentioned = charactersMentionedInNode(node);
-  const merged = [...new Set([...activeSpeakers, ...mentioned])];
-  if (!merged.length) (ACTUAL_CHAPTER_CASTS[chapterKeyForNode(node)] || []).forEach(key => merged.push(key));
+  const merged = [...(ACTUAL_CHAPTER_CASTS[chapterKeyForNode(node)] || [])];
   activeSpeakers.forEach(key => {
     if (!merged.includes(key)) merged.push(key);
   });
@@ -1490,6 +1564,11 @@ function renderMedia(node) {
     return;
   }
   if (!node.media || !node.media.src) {
+    if (isNarrationOnlyPage(node)) {
+      media.innerHTML = '';
+      resetCaptionBounds();
+      return;
+    }
     const titleText = titleScreenText(node);
     if (titleText) {
       media.innerHTML = `<div class="title-screen${titleText.length > 18 ? ' small' : ''}">${escapeHTML(titleText)}</div>`;
@@ -1508,6 +1587,9 @@ function renderMedia(node) {
     frame.setAttribute('allow', 'autoplay; fullscreen');
     frame.setAttribute('allowfullscreen', '');
     media.appendChild(frame);
+    if (isVideoContinuePage(node)) {
+      media.appendChild(createVideoContinueButton(node.outputs[0], false));
+    }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
     return;
@@ -1547,6 +1629,14 @@ function renderMedia(node) {
     }
     v.addEventListener('loadedmetadata', () => updateCaptionBoundsFromMedia(v));
     if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
+    if (isVideoContinuePage(node) && !node.media.loop) {
+      const continueButton = createVideoContinueButton(node.outputs[0], true);
+      v.addEventListener('ended', () => {
+        activeAutoOutput = node.outputs[0];
+        continueButton.hidden = false;
+      });
+      media.appendChild(continueButton);
+    }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
   } else {
@@ -1605,6 +1695,10 @@ function renderChoices(node) {
   }
   if (isFinalMiniGame(node)) {
     contentEl.innerHTML = '<p class="locked-note">Complete the final game to reveal the ending.</p>';
+    return;
+  }
+
+  if (isVideoContinuePage(node) && !node.media.loop) {
     return;
   }
 
@@ -1771,6 +1865,7 @@ function render() {
   appEl.classList.toggle('choice-page', isChoicePage(node));
   appEl.classList.toggle('has-media-decor', hasDecoratedMedia(node));
   appEl.classList.toggle('cover-page', !!node.coverPage);
+  appEl.classList.toggle('narration-only', isNarrationOnlyPage(node));
   document.querySelector('.story-card').classList.toggle('can-go-back', stack.length > 0);
   setSkipButtonVisible(false);
   contentEl.innerHTML = formatDialogueHTML(node.content || '<p></p>');
@@ -1805,7 +1900,7 @@ lineHeightRange.addEventListener('input', () => {
   applyAdminStyle();
 });
 styleResetBtn.onclick = () => {
-  adminState.fontSize = 20;
+  adminState.fontSize = 16;
   adminState.lineHeight = 1.42;
   localStorage.removeItem('gleanianFontSize');
   localStorage.removeItem('gleanianLineHeight');
