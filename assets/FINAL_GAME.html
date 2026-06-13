@@ -857,23 +857,32 @@ function clearActiveSlots() {
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('active'));
 }
 
+function getDropSlotEl(x, y) {
+  for (const slot of document.querySelectorAll('.slot')) {
+    const r = slot.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return slot;
+  }
+  for (const placedEl of document.querySelectorAll('.placed')) {
+    if (drag?.sourceSlotId && placedEl.dataset.slotId === drag.sourceSlotId) continue;
+    const r = placedEl.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      return document.querySelector(`.slot[data-id="${placedEl.dataset.slotId}"]`);
+    }
+  }
+  return null;
+}
+
 function onMove(ev) {
   if (!drag) return;
   moveProxy(ev.clientX, ev.clientY);
   clearActiveSlots();
-  drag.activeSlot = null;
-  document.querySelectorAll('.slot').forEach(slot => {
-    const r = slot.getBoundingClientRect();
-    if (ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom) {
-      slot.classList.add('active');
-      drag.activeSlot = slot;
-    }
-  });
+  drag.activeSlot = getDropSlotEl(ev.clientX, ev.clientY);
+  if (drag.activeSlot) drag.activeSlot.classList.add('active');
 }
 
-function onUp() {
+function onUp(ev) {
   if (!drag) return;
-  const slotEl = drag.activeSlot;
+  const slotEl = getDropSlotEl(ev.clientX, ev.clientY) || drag.activeSlot;
   const c = drag.char;
   document.querySelectorAll('.char.dragging, .placed.dragging').forEach(el => el.classList.remove('dragging'));
   drag.proxy.remove();
