@@ -31,7 +31,10 @@
     min-height:0;
     font-family:'DM Sans', sans-serif;
     color:var(--ink);
-    background:#000;
+    background:
+      radial-gradient(circle at 16% 10%, rgba(255,232,187,.72), transparent 36%),
+      radial-gradient(circle at 88% 88%, rgba(195,206,236,.68), transparent 42%),
+      linear-gradient(142deg, #ffe2cf 0%, #f5e8df 48%, #d9dfef 100%);
     overflow:hidden;
     display:flex;
     align-items:center;
@@ -50,7 +53,10 @@
     height:var(--game-h);
     margin:auto;
     overflow:hidden;
-    background:#000;
+    background:
+      radial-gradient(circle at 16% 10%, rgba(255,232,187,.72), transparent 36%),
+      radial-gradient(circle at 88% 88%, rgba(195,206,236,.68), transparent 42%),
+      linear-gradient(142deg, #ffe2cf 0%, #f5e8df 48%, #d9dfef 100%);
   }
   header {
     position:absolute;
@@ -89,10 +95,7 @@
     gap:14px 22px;
     padding:26px 28px 26px 5.8vw;
     position:relative;
-    background:
-      radial-gradient(circle at 16% 10%, rgba(255,232,187,.72), transparent 36%),
-      radial-gradient(circle at 88% 88%, rgba(195,206,236,.68), transparent 42%),
-      linear-gradient(142deg, #ffe2cf 0%, #f5e8df 48%, #d9dfef 100%);
+    background:transparent;
   }
   .media-card {
     position:relative;
@@ -103,7 +106,7 @@
     border-radius:0;
     box-shadow:none;
     overflow:hidden;
-    background:#eadfce;
+    background:transparent;
     display:flex;
     align-items:center;
     justify-content:center;
@@ -116,7 +119,7 @@
     max-height:none;
     object-fit:contain;
     display:block;
-    background:#eadfce;
+    background:transparent;
   }
   .media-card video::-webkit-media-controls,
   .media-card video::-webkit-media-controls-panel,
@@ -295,13 +298,13 @@
     width:100%;
     height:100%;
     padding:0;
-    background:#e9dfcc;
+    background:transparent;
   }
   .app.cover-page .media-card {
     width:100%;
     height:100%;
     overflow:hidden;
-    background:#e9dfcc;
+    background:transparent;
     cursor:var(--cursor-bee);
   }
   .app.cover-page .media-card img {
@@ -450,9 +453,9 @@
     border-radius:0;
     box-shadow:none;
     background:
-      url("assets/ui/textframe-arrows.svg") center / 116% 100% no-repeat;
+      url("assets/ui/textframe-arrows.svg") center / 132% 100% no-repeat;
     backdrop-filter:none;
-    padding:clamp(34px, 4.4vh, 58px) clamp(48px, 4.8vw, 76px) clamp(52px, 6vh, 86px);
+    padding:clamp(34px, 4.4vh, 58px) clamp(34px, 3.1vw, 52px) clamp(52px, 6vh, 86px);
     display:flex;
     flex-direction:column;
     cursor:var(--cursor-flower);
@@ -461,7 +464,7 @@
   .story-card.can-continue { cursor:var(--cursor-bee); }
   .story-card.has-choices {
     background:
-      url("assets/ui/textframe-arrows.svg") center / 116% 100% no-repeat;
+      url("assets/ui/textframe-arrows.svg") center / 132% 100% no-repeat;
   }
   .story-card.has-choices::before,
   .story-card.has-choices::after {
@@ -507,7 +510,7 @@
     font-size:var(--story-font-size);
     line-height:var(--story-line-height);
     flex:0 0 auto;
-    padding:0 clamp(10px, 1.2vw, 22px);
+    padding:0 clamp(8px, .8vw, 16px);
     color:#17110b;
     letter-spacing:0;
   }
@@ -560,7 +563,7 @@
     gap:14px;
     margin-top:14px;
     flex:0 0 auto;
-    padding:0 clamp(10px, 1.2vw, 22px) 4px;
+    padding:0 clamp(8px, .8vw, 16px) 4px;
     padding-bottom:4px;
   }
   .app.choice-page .content {
@@ -1047,15 +1050,7 @@ function cleanTitle(text) {
     .trim();
 }
 function splitLongStoryNodes() {
-  const maxChars = 460;
-  const nodeIds = [
-    'c1d4833d-a469-4c20-9fc7-85cb3ad826ba',
-    'c4c4d371-b690-415e-9b91-f47ac392c1bd',
-    'd3ee8944-df39-47b0-baa4-776270fd5fc2',
-    'efe686d7-8ebd-421e-80ea-5f80e095dd99',
-    '18729602-ef4f-4cbd-af7e-5d9d3472ada5',
-    '23ea189e-d8ea-44e2-a7df-85c6759015a1'
-  ];
+  const maxChars = 300;
   const textLength = html => strip(html).length;
   const splitParagraph = paragraph => {
     if (textLength(paragraph) <= maxChars) return [paragraph];
@@ -1094,9 +1089,16 @@ function splitLongStoryNodes() {
     if (current.length) chunks.push(current.join(''));
     return chunks;
   };
-  nodeIds.forEach(id => {
+  const shouldSplitNode = node => {
+    if (!node || node.storySplitApplied || node.coverPage) return false;
+    const title = (node.titleText || strip(node.title || '') || '').toUpperCase();
+    if (title.includes('MINIGAME') || title === 'FINAL GAME') return false;
+    if (!textLength(node.content)) return false;
+    return textLength(node.content) > maxChars;
+  };
+  Object.keys(GAME.nodes).forEach(id => {
     const node = GAME.nodes[id];
-    if (!node || node.storySplitApplied) return;
+    if (!shouldSplitNode(node)) return;
     const chunks = chunkContent(node.content);
     if (chunks.length < 2) return;
     const originalOutputs = node.outputs || [];
