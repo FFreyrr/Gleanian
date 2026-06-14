@@ -94,7 +94,7 @@
     grid-template-columns:minmax(0, 1fr);
     grid-template-rows:minmax(0, 67%) minmax(220px, 33%);
     gap:14px;
-    padding:26px clamp(58px, 7vw, 122px);
+    padding:26px clamp(58px, 7vw, 122px) 0;
     position:relative;
     background:transparent;
   }
@@ -445,16 +445,16 @@
   .video-continue {
     position:absolute;
     z-index:18;
-    left:50%;
+    right:calc(var(--caption-left) + 18px);
     bottom:clamp(24px, 5vh, 58px);
-    transform:translateX(-50%);
+    transform:none;
     min-width:156px;
     padding:14px 28px 15px;
     border-radius:999px;
     color:#1c1405;
     background:rgba(255,196,80,.96);
     border:1px solid rgba(255,239,184,.86);
-    box-shadow:0 14px 30px rgba(0,0,0,.36);
+    box-shadow:none;
     font-size:18px;
     font-weight:700;
     letter-spacing:0;
@@ -464,7 +464,7 @@
   }
   .video-continue:hover {
     background:#ffd47a;
-    transform:translate(-50%, -1px);
+    transform:translateY(-1px);
   }
   .title-screen {
     width:100%;
@@ -1648,8 +1648,8 @@ function renderMedia(node) {
     frame.setAttribute('allowfullscreen', '');
     media.appendChild(frame);
     if (isVideoContinuePage(node)) {
-      const continueButton = createVideoContinueButton(node.outputs[0], true);
-      window.setTimeout(() => revealVideoContinue(node, continueButton), videoContinueDelayForNode(node));
+      const continueButton = createVideoContinueButton(node.outputs[0], false);
+      revealVideoContinue(node, continueButton);
       media.appendChild(continueButton);
     }
     appendMediaDecor(node);
@@ -1691,7 +1691,8 @@ function renderMedia(node) {
     }
     let continueButton = null;
     if (isVideoContinuePage(node) && !node.media.loop) {
-      continueButton = createVideoContinueButton(node.outputs[0], true);
+      continueButton = createVideoContinueButton(node.outputs[0], false);
+      revealVideoContinue(node, continueButton);
       v.addEventListener('ended', () => revealVideoContinue(node, continueButton));
       v.addEventListener('timeupdate', () => {
         if (Number.isFinite(v.duration) && v.duration > 0 && v.duration - v.currentTime <= 0.35) {
@@ -1702,17 +1703,7 @@ function renderMedia(node) {
     }
     v.addEventListener('loadedmetadata', () => {
       updateCaptionBoundsFromMedia(v);
-      if (continueButton && Number.isFinite(v.duration) && v.duration > 0) {
-        window.setTimeout(() => revealVideoContinue(node, continueButton), Math.ceil(v.duration * 1000) + 350);
-      }
     });
-    if (continueButton) {
-      window.setTimeout(() => {
-        if (!Number.isFinite(v.duration) || v.duration <= 0 || v.currentTime < 0.1) {
-          revealVideoContinue(node, continueButton);
-        }
-      }, 12000);
-    }
     if (node.media.autoplay) { v.autoplay = true; v.play().catch(()=>{}); }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
