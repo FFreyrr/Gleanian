@@ -124,11 +124,22 @@
     display:none !important;
     -webkit-appearance:none;
   }
-  .video-toggle {
+  .video-control-bar {
     position:absolute;
-    z-index:8;
+    z-index:18;
     left:calc(var(--caption-left) + 18px);
+    right:calc(var(--caption-left) + 18px);
     bottom:18px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    pointer-events:none;
+  }
+  .video-toggle {
+    position:static;
+    z-index:1;
+    flex:0 0 auto;
     width:48px;
     height:48px;
     display:grid;
@@ -140,6 +151,7 @@
     padding:0;
     box-shadow:none;
     cursor:pointer;
+    pointer-events:auto;
   }
   .video-toggle:hover {
     background:#ffd47a;
@@ -371,10 +383,9 @@
     background:transparent;
   }
   .video-continue {
-    position:absolute;
-    z-index:18;
-    right:calc(var(--caption-left) + 18px);
-    bottom:18px;
+    position:static;
+    z-index:1;
+    flex:0 0 auto;
     transform:none;
     min-width:156px;
     height:48px;
@@ -389,6 +400,7 @@
     letter-spacing:0;
     display:grid;
     place-items:center;
+    pointer-events:auto;
   }
   .video-continue[hidden] {
     display:none;
@@ -1324,6 +1336,15 @@ function createVideoContinueButton(out, hidden = true) {
   });
   return button;
 }
+function ensureVideoControlBar() {
+  let bar = media.querySelector('.video-control-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'video-control-bar';
+    media.appendChild(bar);
+  }
+  return bar;
+}
 function revealVideoContinue(node, button) {
   if (currentId !== node.id || !button?.isConnected) return;
   const out = node.outputs?.[0] || null;
@@ -1679,7 +1700,7 @@ function renderMedia(node) {
     if (isVideoContinuePage(node)) {
       const continueButton = createVideoContinueButton(node.outputs[0], false);
       revealVideoContinue(node, continueButton);
-      media.appendChild(continueButton);
+      ensureVideoControlBar().appendChild(continueButton);
     }
     appendMediaDecor(node);
     updateCaptionBoundsFromAspect();
@@ -1698,6 +1719,9 @@ function renderMedia(node) {
     };
     if (node.media.loop) v.loop = true;
     media.appendChild(v);
+    const controls = (shouldShowVideoToggle(node) || (isVideoContinuePage(node) && !node.media.loop))
+      ? ensureVideoControlBar()
+      : null;
     if (shouldShowVideoToggle(node)) {
       const toggle = document.createElement('button');
       toggle.className = 'video-toggle';
@@ -1716,7 +1740,7 @@ function renderMedia(node) {
       v.addEventListener('play', updateToggle);
       v.addEventListener('pause', updateToggle);
       v.addEventListener('ended', updateToggle);
-      media.appendChild(toggle);
+      controls.appendChild(toggle);
       updateToggle();
     }
     let continueButton = null;
@@ -1729,7 +1753,7 @@ function renderMedia(node) {
           revealVideoContinue(node, continueButton);
         }
       });
-      media.appendChild(continueButton);
+      controls.appendChild(continueButton);
     }
     v.addEventListener('loadedmetadata', () => {
       updateCaptionBoundsFromMedia(v);
