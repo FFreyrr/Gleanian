@@ -59,6 +59,17 @@
       radial-gradient(circle at 88% 88%, rgba(195,206,236,.68), transparent 42%),
       linear-gradient(142deg, #ffe2cf 0%, #f5e8df 48%, #d9dfef 100%);
   }
+  .app:not(.cover-page):not(.minigame):not(.intro-video)::after {
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:clamp(150px, 30vh, 380px);
+    background:#f5e8df;
+    z-index:0;
+    pointer-events:none;
+  }
   header {
     position:absolute;
     z-index:20;
@@ -96,6 +107,7 @@
     gap:14px;
     padding:26px clamp(58px, 7vw, 122px) 0;
     position:relative;
+    z-index:1;
     background:transparent;
   }
   .media-card {
