@@ -1611,7 +1611,7 @@ function renderMedia(node) {
     const frame = document.createElement('iframe');
     frame.className = 'mini-iframe';
     const lostQuery = Object.entries(companionLosses).filter(([, lost]) => lost).map(([id]) => id).join(',');
-    frame.src = `assets/FINAL_GAME.html?v=final-battle-6${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
+    frame.src = `assets/FINAL_GAME.html?v=final-battle-7${lostQuery ? `&lost=${encodeURIComponent(lostQuery)}` : ''}`;
     frame.title = 'Final game';
     frame.setAttribute('allow', 'autoplay; fullscreen');
     frame.addEventListener('load', () => sendFinalBattleState(frame));

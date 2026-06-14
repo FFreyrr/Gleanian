@@ -656,12 +656,26 @@ function getAcquiredCompanionsForThisRun() {
   return acquiredCompanions;
 }
 
-function outputQuestResult(success) {
+function requiredFinalCompanionState() {
+  const assigned = new Set([...placed.values()]);
+  const required = ['nora', 'paul'];
+  const missing = required.filter(id => !assigned.has(id));
+  const lost = required.filter(id => lostCompanions[id]);
+  return {
+    ok: missing.length === 0 && lost.length === 0,
+    missing,
+    lost
+  };
+}
+
+function outputQuestResult(success, hiddenReason = '') {
   const payload = {
     type: 'forestQuestComplete',
     success,
     ending: success ? 'good' : 'bad',
+    hiddenReason,
     acquiredCompanions: { ...acquiredCompanions },
+    lostCompanions: { ...lostCompanions },
     placedSlots: Object.fromEntries([...placed.entries()]),
     checks: checkState ? checkState.rows.map(r => ({
       taskId: r.task.slotId,
@@ -672,8 +686,6 @@ function outputQuestResult(success) {
       supportName: r.support ? r.support.name : null,
       skill: r.main.skill,
       supportSkill: r.supportPoints,
-      dice: r.dice,
-      total: r.total,
       success: r.pass
     })) : []
   };
@@ -686,7 +698,7 @@ function outputQuestResult(success) {
   return payload;
 }
 
-const TASKS = [{"slotId": "insectA", "kind": "insect", "taskNo": "Insect Task 1", "taskName": "Scout the Termite Tunnel", "copy": "The entrance to the termite tunnel is narrow and damp, its walls covered with tiny bite marks. The team needs an insect companion to crawl inside, check whether the path is safe, and find the correct route toward the hollow core of the tree.", "prompt": "Make a tunnel scouting check.", "failure": "A small section of the tunnel collapses, forcing the team to retreat and search again.", "success": {"terra": "Terra moves quickly along the edge of the tunnel, pushing away splinters with her strong forelegs and finding a stable path forward.", "elowen": "Elowen slips lightly through the narrow cracks, barely disturbing the termites, and discovers a hidden route toward the heart of the tree.", "nora": "Nora buzzes low through the tunnel, dodging loose splinters with quick movements and confirming the safest way ahead."}}, {"slotId": "insectB", "kind": "insect", "taskNo": "Insect Task 2", "taskName": "Clear the Heartwood Barrier", "copy": "The path toward the heart of the tree is blocked by splinters, resin, and old termite shells. An insect companion must slip through the cracks, push, chew, or carry away the debris to open the inner passage.", "prompt": "Make a barrier clearing check.", "failure": "Sticky resin spreads across the path, making the passage even harder to cross.", "success": {"terra": "Terra uses her impressive strength to move the broken wood blocking the tunnel, clearing a passable route for the team.", "elowen": "Elowen quietly moves around the resin and old shells, finding the weakest point in the barrier and guiding the team through the gap.", "nora": "Nora darts between the obstacles, loosening the splinters with repeated strikes and opening enough space to move forward."}}, {"slotId": "birdA", "kind": "bird", "taskNo": "Bird Task 1", "taskName": "Distract the Woodpecker Guard", "copy": "A woodpecker guard stands near the trunk, tapping the bark with its sharp beak. A bird companion must create noise, swoop between branches, or draw attention away so the team can enter the tunnel unnoticed.", "prompt": "Make a guard distraction check.", "failure": "The guard suddenly turns back, staring suspiciously at the hollow entrance.", "success": {"harry": "Harry spins rapidly in front of the guard, his flickering movements drawing the woodpecker’s attention and leaving the entrance temporarily safe.", "paul": "Paul calmly reads the guard’s line of sight and uses a series of perfectly timed calls to lure the woodpecker toward another branch.", "elegua": "Elegua lets out a loud, confident call as if commanding a performance, successfully drawing the woodpecker away from the entrance."}}, {"slotId": "birdB", "kind": "bird", "taskNo": "Bird Task 2", "taskName": "Keep Watch and Signal", "copy": "The thick canopy blocks the view, and more woodpecker guards may approach at any moment. A bird companion must fly higher, watch the patrol routes, and signal the team with calls or wing movements.", "prompt": "Make a lookout and signal check.", "failure": "The leaves block your view, and the sound of danger draws closer.", "success": {"harry": "Harry flies high for a quick patrol, using sharp wing signals to warn the team away from an approaching guard.", "paul": "Paul watches the patrol route from the shadow of a branch, accurately choosing the safest moment for the team to move.", "elegua": "Elegua calls out clear signals from the canopy, passing the guards’ positions to every companion and helping the team move through the danger zone."}}];
+const TASKS = [{"slotId": "insectA", "kind": "insect", "taskNo": "Insect Task 1", "taskName": "Scout the Termite Tunnel", "copy": "The entrance to the termite tunnel is narrow and damp, its walls covered with tiny bite marks. The team needs an insect companion to crawl inside, check whether the path is safe, and find the correct route toward the hollow core of the tree.", "prompt": "Make a tunnel scouting check.", "failure": "A small section of the tunnel collapses, forcing the team to retreat and search again.", "success": {"terra": "Terra moves quickly along the edge of the tunnel, pushing away splinters with her strong forelegs and finding a stable path forward.", "elowen": "Elowen slips lightly through the narrow cracks, barely disturbing the termites, and discovers a hidden route toward the heart of the tree.", "nora": "Nora buzzes low through the tunnel, dodging loose splinters with quick movements and confirming the safest way ahead."}}, {"slotId": "insectB", "kind": "insect", "taskNo": "Insect Task 2", "taskName": "Clear the Heartwood Barrier", "copy": "The path toward the heart of the tree is blocked by splinters, resin, and old termite shells. An insect companion must slip through the cracks, push, chew, or carry away the debris to open the inner passage.", "prompt": "Make a barrier clearing check.", "failure": "Sticky resin spreads across the path, making the passage even harder to cross.", "success": {"terra": "Terra uses her impressive strength to move the broken wood blocking the tunnel, clearing a passable route for the team.", "elowen": "Elowen quietly moves around the resin and old shells, finding the weakest point in the barrier and guiding the team through the gap.", "nora": "Nora darts between the obstacles, loosening the splinters with repeated strikes and opening enough space to move forward."}}, {"slotId": "birdA", "kind": "bird", "taskNo": "Bird Task 1", "taskName": "Distract the Woodpecker Guard", "copy": "A woodpecker guard stands near the trunk, tapping the bark with its sharp beak. A bird companion must create noise, swoop between branches, or draw attention away so the team can enter the tunnel unnoticed.", "prompt": "Make a guard distraction check.", "failure": "The guard suddenly turns back, staring suspiciously at the hollow entrance.", "success": {"harry": "Harry spins rapidly in front of the guard, his flickering movements drawing the woodpecker's attention and leaving the entrance temporarily safe.", "paul": "Paul calmly reads the guard's line of sight and uses a series of perfectly timed calls to lure the woodpecker toward another branch.", "elegua": "Elegua lets out a loud, confident call as if commanding a performance, successfully drawing the woodpecker away from the entrance."}}, {"slotId": "birdB", "kind": "bird", "taskNo": "Bird Task 2", "taskName": "Keep Watch and Signal", "copy": "The thick canopy blocks the view, and more woodpecker guards may approach at any moment. A bird companion must fly higher, watch the patrol routes, and signal the team with calls or wing movements.", "prompt": "Make a lookout and signal check.", "failure": "The leaves block your view, and the sound of danger draws closer.", "success": {"harry": "Harry flies high for a quick patrol, using sharp wing signals to warn the team away from an approaching guard.", "paul": "Paul watches the patrol route from the shadow of a branch, accurately choosing the safest moment for the team to move.", "elegua": "Elegua calls out clear signals from the canopy, passing the guards' positions to every companion and helping the team move through the danger zone."}}];
 
 const SLOTS = [
   { id:'insectA', kind:'insect', title:'Scout the Termite Tunnel', x:24, y:36 },
@@ -735,7 +747,7 @@ function updateStatus() {
   const readiness = getReadiness();
   $('#warning').textContent = readiness.ok ? '' : readiness.message;
   $('#message').textContent = readiness.ok
-    ? 'Ready. Roll the dice to check all four key tasks one by one.'
+    ? 'Ready. Start the final battle sequence.'
     : 'Drag at least one bird and one insect into the matching task slots.';
 }
 
@@ -751,7 +763,7 @@ function getReadiness() {
   }
   const birdCount = SLOTS.filter(s => s.kind === 'bird' && placed.has(s.id)).length;
   const insectCount = SLOTS.filter(s => s.kind === 'insect' && placed.has(s.id)).length;
-  if (birdCount < 1 && insectCount < 1) return { ok:false, message:'Need at least one bird and one insect before rolling.' };
+  if (birdCount < 1 && insectCount < 1) return { ok:false, message:'Need at least one bird and one insect before starting.' };
   if (birdCount < 1) return { ok:false, message:'Need at least one bird in the two bird slots.' };
   if (insectCount < 1) return { ok:false, message:'Need at least one insect in the two insect slots.' };
   return { ok:true, message:'' };
@@ -778,7 +790,7 @@ function renderSlots() {
       placedEl.dataset.slotId = slot.id;
       placedEl.style.left = slot.x + '%';
       placedEl.style.top = slot.y + '%';
-      placedEl.innerHTML = `<img src="${c.img}" alt="${c.name}"><span class="tag">${c.name} · ${c.skill}</span>`;
+      placedEl.innerHTML = `<img src="${c.img}" alt="${c.name}"><span class="tag">${c.name} - ${c.skill}</span>`;
       field.appendChild(placedEl);
       bindPlaced(placedEl, c, slot.id);
     }
@@ -796,7 +808,7 @@ function renderChars() {
   const acquiredNames = activeCharacters.map(c => c.name).join(', ') || 'None';
   const note = document.getElementById('availabilityNote');
   if (note) note.textContent = `Available companions: ${acquiredCount}/6 - ${acquiredNames}${lostNames ? `. Lost: ${lostNames}.` : '.'}`;
-  if (note) note.textContent = `Available from previous program: ${acquiredCount}/6 · ${acquiredNames}. Demo mode randomizes this list.`;
+  if (note) note.textContent = `Available from previous program: ${acquiredCount}/6 - ${acquiredNames}. Demo mode randomizes this list.`;
   if (note) note.textContent = `Available companions: ${acquiredCount}/6 - ${acquiredNames}${lostNames ? `. Lost: ${lostNames}.` : '.'}`;
   remaining.forEach(c => {
     const el = document.createElement('div');
@@ -922,8 +934,6 @@ function onUp(ev) {
   drag = null;
 }
 
-function rollDie() { return 1 + Math.floor(Math.random() * 6); }
-
 function getEffectiveAssignments(kind) {
   const slots = SLOTS.filter(s => s.kind === kind);
   const filled = slots.filter(s => placed.has(s.id));
@@ -971,15 +981,14 @@ function renderPendingCheck() {
   checkState.phase = 'pending';
   $('#nextCheckBtn').disabled = false;
   $('#nextCheckBtn').textContent = 'Try';
-  $('#checkMeta').textContent = `${a.task.taskNo} · ${a.main.name}${a.autoReuse ? ' · auto-used' : ''}`;
+  $('#checkMeta').textContent = `${a.task.taskNo} - ${a.main.name}${a.autoReuse ? ' - auto-used' : ''}`;
   $('#checkTitle').textContent = a.task.taskName;
   $('#checkBox').innerHTML = `
     <div class="task-copy">${a.task.copy}</div>
     <div class="formula">
       <div class="formula-row"><span class="formula-label">Character Skill</span><b>${a.main.skill}</b></div>
       <div class="formula-row"><span class="formula-label">Support Skill</span><b>${a.support ? formatNum(a.support.skill / 2) : '0'}</b></div>
-      <div class="formula-row"><span class="formula-label">Dice Roll</span><span class="die">?</span></div>
-      <div class="formula-result"><span>Target</span><span>&gt; 10</span></div>
+      <div class="formula-result"><span>Battle Step</span><span class="total-box">Ready</span></div>
     </div>
 
   `;
@@ -988,16 +997,12 @@ function renderPendingCheck() {
 function rollCurrentCheck() {
   const a = checkState.queue[checkState.index];
   if (!a) return;
-  const dice = rollDie();
   const supportPoints = a.support ? a.support.skill / 2 : 0;
-  const total = a.main.skill + supportPoints + dice;
-  const pass = total > 10;
-  const supportPrefix = pass && a.support ? `With ${a.support.name}'s help, ` : '';
-  const resultCopy = pass
-    ? supportPrefix + (a.task.success[a.main.id] || 'The task succeeds.')
-    : a.task.failure;
+  const pass = true;
+  const supportPrefix = a.support ? `With ${a.support.name}'s help, ` : '';
+  const resultCopy = supportPrefix + (a.task.success[a.main.id] || 'The task succeeds.');
 
-  const row = { ...a, dice, supportPoints, total, pass, resultCopy };
+  const row = { ...a, supportPoints, pass, resultCopy };
   const existingRowIndex = checkState.rows.findIndex(r => r.slot.id === a.slot.id);
   if (existingRowIndex >= 0) checkState.rows[existingRowIndex] = row;
   else checkState.rows.push(row);
@@ -1007,13 +1012,11 @@ function rollCurrentCheck() {
     <div class="formula">
       <div class="formula-row"><span class="formula-label">Character Skill</span><b>${a.main.skill}</b></div>
       <div class="formula-row"><span class="formula-label">Support Skill</span><b>${formatNum(supportPoints)}</b></div>
-      <div class="formula-row"><span class="formula-label">Dice Roll</span><span class="die">${dice}</span></div>
       <div class="formula-result">
-        <span>Total</span><span class="total-box">${formatNum(total)}</span><span>&gt; 10</span>
-        <span class="${pass ? 'pass' : 'fail'}">${pass ? 'PASS' : 'FAIL'}</span>
+        <span>Battle Step</span><span class="total-box">Complete</span>
       </div>
     </div>
-    <div class="roll-copy ${pass ? 'pass' : 'fail'}">${resultCopy}</div>
+    <div class="roll-copy pass">${resultCopy}</div>
   `;
 
   addHistoryRow(row);
@@ -1035,20 +1038,23 @@ function addHistoryRow(r) {
     $('#history').appendChild(div);
   }
   div.innerHTML = `
-    <div><b>${r.task.taskName}</b><br><span style="color:rgba(47,52,31,.72)">${r.main.name} · Skill ${r.main.skill} + Support ${formatNum(r.supportPoints)} + Dice ${r.dice} = ${formatNum(r.total)}</span></div>
-    <div class="${r.pass ? 'pass' : 'fail'}">${r.pass ? 'PASS' : 'FAIL'}</div>
+    <div><b>${r.task.taskName}</b><br><span style="color:rgba(47,52,31,.72)">${r.main.name} - Skill ${r.main.skill} + Support ${formatNum(r.supportPoints)}</span></div>
+    <div class="pass">DONE</div>
   `;
 }
 
 function renderFinalResult() {
   const allPass = checkState.rows.every(r => r.pass);
-  outputQuestResult(allPass);
+  const requiredState = requiredFinalCompanionState();
+  const success = allPass && requiredState.ok;
+  const hiddenReason = requiredState.ok ? '' : `required_final_companion_missing_or_lost:${[...requiredState.missing, ...requiredState.lost].join(',')}`;
+  outputQuestResult(success, hiddenReason);
   $('#checkMeta').textContent = 'Quest Result';
-  $('#checkTitle').textContent = allPass ? 'The Hollow Tree Opens' : 'The Team Must Try Again';
+  $('#checkTitle').textContent = success ? 'The Hollow Tree Opens' : 'The Team Must Try Again';
   $('#checkBox').innerHTML = `
     <div class="final-result">
-      <h3 class="${allPass ? 'pass' : 'fail'}">${allPass ? 'Challenge Cleared!' : 'Challenge Failed'}</h3>
-      <p>${allPass ? 'All four key tasks succeeded. The team can safely enter the hollow tree.' : 'At least one key task failed. Adjust the team and try the checks again.'}</p>
+      <h3 class="${success ? 'pass' : 'fail'}">${success ? 'Challenge Cleared!' : 'Challenge Failed'}</h3>
+      <p>${success ? 'The team can safely enter the hollow tree.' : 'The team cannot complete the final approach.'}</p>
     </div>
   `;
   $('#finalResult').style.display = 'none';
