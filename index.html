@@ -1481,41 +1481,57 @@ function chapterAccentForNode(node) {
   const active = speakerOrderInHTML(node?.content || '').find(key => CHAPTER_ACCENTS[key]);
   return CHAPTER_ACCENTS[active] || CHAPTER_ACCENTS[chapterKeyForNode(node)] || CHAPTER_ACCENTS.nora;
 }
-const ACTUAL_CHAPTER_CASTS = (() => {
-  const buckets = {};
-  const seenNodes = new Set();
-  const visit = id => {
-    if (!id || seenNodes.has(id)) return;
-    seenNodes.add(id);
-    const node = GAME.nodes[id];
-    if (!node) return;
-    if (!node.coverPage && !isAnyMiniGame(node)) {
-      const key = chapterKeyForNode(node);
-      if (!buckets[key]) buckets[key] = [];
-      speakerOrderInHTML(node.content || '').forEach(speaker => {
-        if (CHARACTER_AVATARS[speaker] && !buckets[key].includes(speaker)) buckets[key].push(speaker);
-      });
-    }
-    (node.outputs || []).forEach(out => {
-      if (out.targetType === 'elements') visit(out.target);
-      if (out.targetType === 'branches') {
-        const branch = GAME.branches[out.target];
-        visit(branch?.if?.target);
-        visit(branch?.else?.target);
-      }
-    });
-  };
-  visit(GAME.start);
-  return buckets;
-})();
+const CHARACTER_MENTION_PATTERNS = {
+  nora: /\bnora\b/i,
+  jenny: /\bjenny\b/i,
+  harry: /\bharry\b/i,
+  paul: /\bpaul\b/i,
+  terra: /\bterra\b/i,
+  soila: /\bsoila\b/i,
+  antalia: /\bantalia\b/i,
+  elegua: /\belegua\b/i,
+  eloween: /\belowee?n\b/i,
+  eshu: /\beshu\b/i,
+  woodpeckers: /\bwoodpeckers?\b/i,
+  john: /\bjohn\b/i,
+  saul: /\bsaul\b/i,
+  linda: /\blinda\b/i,
+  xylia: /\bx[yi]lia\b/i,
+  honilia: /\bhonilia\b/i
+};
+function isEndingNode(node) {
+  const text = `${node?.titleText || ''} ${strip(node?.title || '')} ${node?.media?.src || ''}`.toLowerCase();
+  return /\b(good|bad)?\s*ending\b/.test(text) || /assets\/endings\//.test(text);
+}
+function shouldHideCharacterRail(node) {
+  return !node || isEndingNode(node) || node.coverPage || isAnyMiniGame(node) || isIntroVideoNode(node);
+}
+function characterSearchTextForNode(node) {
+  return [
+    node?.titleText,
+    strip(node?.title || ''),
+    strip(node?.content || ''),
+    node?.media?.src,
+    ...(node?.outputs || []).map(out => strip(out.label || ''))
+  ].filter(Boolean).join(' ');
+}
 function characterCastForNode(node, activeSpeakers) {
-  const merged = [...(ACTUAL_CHAPTER_CASTS[chapterKeyForNode(node)] || [])];
-  activeSpeakers.forEach(key => {
-    if (!merged.includes(key)) merged.push(key);
+  const cast = [];
+  const add = key => {
+    if (CHARACTER_AVATARS[key] && !cast.includes(key)) cast.push(key);
+  };
+  activeSpeakers.forEach(add);
+  const searchText = characterSearchTextForNode(node);
+  Object.entries(CHARACTER_MENTION_PATTERNS).forEach(([key, pattern]) => {
+    if (pattern.test(searchText)) add(key);
   });
-  return merged.filter(key => CHARACTER_AVATARS[key]);
+  return cast;
 }
 function renderCharacterRail(node) {
+  if (shouldHideCharacterRail(node)) {
+    characterRail.innerHTML = '';
+    return;
+  }
   const activeSpeakers = speakersInHTML(node.content || '');
   const cast = characterCastForNode(node, activeSpeakers);
   characterRail.innerHTML = cast.map(key => {
